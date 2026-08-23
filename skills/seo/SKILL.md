@@ -67,9 +67,61 @@ For diagnosis, execute `claude-seo doctor --json`; its output intentionally omit
 absolute paths and environment values. If any `claude-seo run` command reports
 that setup is required, suggest `/seo setup` and do not improvise a `pip install`.
 
+## Pre-Flight Capability Check (mandatory, before ANY analysis command starts)
+
+**Never silently settle for whatever free-tier/lab-only method happens to be
+configured, and never ask about it mid-audit either.** Do exactly one
+capability scan and exactly one confirmation, both before any crawling,
+fetching, or analysis begins — not zero (silently defaulting to basic) and
+not several (interrupting the audit repeatedly).
+
+1. **Scan what's actually available** — run these, don't guess from memory:
+   - `claude-seo run google_auth.py --tier` — API key (PSI/CrUX lab+field
+     data), service account (GSC/Indexing), GA4 property
+   - `claude-seo run backlinks_auth.py --tier` — Moz/Bing backlink APIs
+   - Check `~/.claude/skills/` for installed extension directories:
+     `seo-ahrefs`, `seo-dataforseo`, `seo-firecrawl`, `seo-profound`,
+     `seo-seranking`, `seo-bing`, `seo-unlighthouse`, `seo-screaming-frog`
+   - Check env vars relevant to live checks: `GEMINI_API_KEY`,
+     `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY` (live AI
+     citation checking — see seo-geo), `GOOGLE_CSE_API_KEY`/`GOOGLE_CSE_ID`
+     (voice-search live check)
+   - If you're aware of a materially better data source or method for this
+     specific audit than what's configured or than this repo's hardcoded
+     default path — a newer API, a free tier the user likely qualifies for,
+     a more accurate technique — surface it here too. Don't silently use the
+     lesser default, and don't wait until after the audit starts to mention it.
+
+2. **Present one consolidated summary and ask once.** Table format: what's
+   configured (and therefore what quality of data the audit will use for
+   it), what's missing (and exactly what it would upgrade), and a one-line
+   setup pointer for each gap. Example shape:
+
+   | Capability | Status | If missing, audit uses instead |
+   |---|---|---|
+   | PSI/CrUX real-user field data | ✅ configured / ❌ not set | Lab-only Lighthouse via Unlighthouse (no real-user LCP/INP/CLS) |
+   | Backlink index | ✅ Ahrefs / ⚠️ free-tier (Moz/Bing/CC) only | Smaller, slower-refreshed link graph |
+   | Live AI-citation check | ✅ N provider(s) / ❌ none | GEO score stays proxy-only (no live citation) |
+
+   End with one question: proceed now with what's configured, or pause to
+   add any of the missing pieces first? Wait for that single answer, then
+   run the entire audit through to completion without further permission
+   stops for capability choices already covered by this checklist.
+
+3. **Once confirmed, always use the best available method — automatically.**
+   If a capability is configured, use it; don't fall back to its free/basic
+   sibling out of habit. Concretely: if `GOOGLE_API_KEY` is set, use real
+   PSI+CrUX field data, not Unlighthouse-only; if `seo-ahrefs` is installed,
+   prefer it over the free Moz/Bing/Common-Crawl combination for backlink
+   depth; if any of `GEMINI_API_KEY`/`OPENAI_API_KEY`/`ANTHROPIC_API_KEY`/
+   `PERPLEXITY_API_KEY` are set, run `live_citation_check.py` against all
+   configured providers, not just whichever is free; if `seo-screaming-frog`
+   is installed and the site is large, prefer it over the ~500-page cap.
+
 ## Orchestration Logic
 
-When the user invokes `/seo audit`, delegate to subagents in parallel:
+When the user invokes `/seo audit`, run the Pre-Flight Capability Check
+above first, then delegate to subagents in parallel:
 1. Detect business type (SaaS, local, ecommerce, publisher, agency, other)
 2. Spawn subagents: seo-technical, seo-content, seo-schema, seo-sitemap, seo-performance, seo-visual, seo-geo
 3. If Google API credentials detected (`claude-seo run google_auth.py --check`), also spawn seo-google agent
@@ -86,7 +138,9 @@ When the user invokes `/seo audit`, delegate to subagents in parallel:
 14. Create prioritized action plan with dependency sequencing + falsifiability per recommendation
 15. **Offer PDF report**: "Generate a professional PDF report? Use `/seo google report full`"
 
-For individual commands, load the relevant sub-skill directly.
+For individual commands, load the relevant sub-skill directly — the
+Pre-Flight Capability Check still applies, scoped to what that command
+actually uses (e.g. `/seo google` only needs the Google API row).
 After any analysis command completes, offer to generate a PDF report via `scripts/google_report.py`.
 
 ## Synthesis Methodology

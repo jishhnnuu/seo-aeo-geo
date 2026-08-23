@@ -44,6 +44,13 @@ Config file: `~/.config/claude-seo/google-api.json`
 
 If missing, read `references/auth-setup.md` and walk the user through setup.
 
+**During a full `/seo audit`**: don't let missing credentials here mean
+this skill is silently never spawned and CWV data quietly comes from
+lab-only Lighthouse instead. That gap belongs in the Pre-Flight
+Capability Check (`skills/seo/SKILL.md`) run once before the audit
+starts — surfaced and confirmed there, not discovered as a silent
+omission afterward.
+
 ### Credential Tiers
 
 | Tier | Detection | Available Commands |

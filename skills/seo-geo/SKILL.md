@@ -395,6 +395,12 @@ Generate `GEO-ANALYSIS.md` with:
 
 ## Live Citation Checking (First-Party, Free Tier)
 
+This provider set (Gemini free / OpenAI / Anthropic / Perplexity paid) is
+exactly the kind of thing the Pre-Flight Capability Check
+(`skills/seo/SKILL.md`) should surface upfront, once, before a GEO audit
+starts — how many providers are actually configured, not silently
+defaulting to whichever is free.
+
 Every criterion above (citability score, structural readability, crawler
 access) measures whether a page *could* be cited — none of it actually
 asks an AI platform a real question and checks whether the brand/domain

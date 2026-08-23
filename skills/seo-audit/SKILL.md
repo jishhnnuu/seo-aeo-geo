@@ -12,6 +12,17 @@ metadata:
 
 # Full Website SEO Audit
 
+## Before Starting
+
+Run the **Pre-Flight Capability Check** from `skills/seo/SKILL.md` first —
+one consolidated scan of what's configured (PSI/CrUX field data, backlink
+index, installed extensions, live-citation keys) and one upfront question
+to the user about proceeding vs. adding missing credentials. Do this once,
+before step 1 below, not per-category during the audit. Once confirmed,
+every category below uses its best-available method automatically —
+never silently fall back to a free/lab-only method when a better one is
+configured.
+
 ## Process
 
 1. **Render homepage**: use `claude-seo run render_page.py <url> --mode auto --json` to capture raw HTML, rendered HTML, extracted text, SPA status, and accessibility data when needed
