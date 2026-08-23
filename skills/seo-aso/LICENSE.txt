@@ -1,0 +1,4 @@
+MIT License - see repository root LICENSE and NOTICE.md for complete terms.
+
+Copyright (c) 2026 Corey Haines (original skill, coreyhaines31/marketingskills)
+Ported and adapted for this repository under the same MIT terms.
