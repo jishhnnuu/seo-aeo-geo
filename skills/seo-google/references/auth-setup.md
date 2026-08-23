@@ -129,9 +129,29 @@ Instead of (or in addition to) the config file:
 | Variable | Purpose |
 |----------|---------|
 | `GOOGLE_API_KEY` | API key for PSI/CrUX |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Path to service account JSON |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to service account JSON file |
+| `GOOGLE_APPLICATION_CREDENTIALS_JSON` | Raw JSON content of the service account key (not a path). Takes priority over `GOOGLE_APPLICATION_CREDENTIALS` when both are set. |
 | `GA4_PROPERTY_ID` | GA4 property (e.g., `properties/123456789`) |
 | `GSC_PROPERTY` | Default GSC property (e.g., `sc-domain:example.com`) |
+
+### Cloud environments with no persistent filesystem
+
+Some hosts (Render, Railway, Fly.io, CI secret stores, containers without
+a writable/persistent volume) only let you set environment variable
+*strings* in their dashboard — there's nowhere to upload the service
+account `.json` file itself, and `GOOGLE_APPLICATION_CREDENTIALS` only
+ever accepts a file path, never inline content. For that case, paste the
+**entire contents** of the service account JSON key file as the value of
+`GOOGLE_APPLICATION_CREDENTIALS_JSON` instead:
+
+```bash
+GOOGLE_APPLICATION_CREDENTIALS_JSON={"type":"service_account","client_email":"...","private_key":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n", ...}
+```
+
+This is parsed directly via `google.oauth2.service_account.Credentials.from_service_account_info()`
+— no temp file is written to disk. The equivalent field in
+`google-api.json` is `"service_account_json"` (also raw JSON content, not
+a path) if you'd rather keep it in the config file than an env var.
 
 ## OAuth Scopes Used
 

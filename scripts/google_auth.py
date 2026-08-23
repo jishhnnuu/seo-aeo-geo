@@ -97,11 +97,12 @@ def load_config() -> dict:
     are filled from environment variables.
 
     Returns:
-        Dictionary with keys: service_account_path, api_key,
-        default_property, ga4_property_id. Missing values are None.
+        Dictionary with keys: service_account_path, service_account_json,
+        api_key, default_property, ga4_property_id. Missing values are None.
     """
     config = {
         "service_account_path": None,
+        "service_account_json": None,
         "api_key": None,
         "default_property": None,
         "ga4_property_id": None,
@@ -120,6 +121,14 @@ def load_config() -> dict:
     if not config["service_account_path"]:
         config["service_account_path"] = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
 
+    if not config["service_account_json"]:
+        # Inline JSON content — for cloud environments (Render, Railway,
+        # Fly.io, CI secrets, containers without a persistent/writable
+        # filesystem) whose settings UI only accepts env var strings, not
+        # uploaded files. Takes priority over service_account_path when
+        # both are set (see _load_service_account_info).
+        config["service_account_json"] = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+
     if not config["api_key"]:
         config["api_key"] = os.environ.get("GOOGLE_API_KEY")
 
@@ -130,6 +139,46 @@ def load_config() -> dict:
         config["default_property"] = os.environ.get("GSC_PROPERTY")
 
     return config
+
+
+def _load_service_account_info(config: dict) -> "tuple[Optional[dict], Optional[str]]":
+    """
+    Resolve service account credentials as a parsed dict, from either
+    inline JSON or a file path. Returns (info, error) where exactly one
+    is None; both None means "not configured" (not an error).
+
+    Checked in order:
+      1. config['service_account_json'] (GOOGLE_APPLICATION_CREDENTIALS_JSON
+         env var, or a 'service_account_json' field in google-api.json) —
+         the raw JSON content of the service account key.
+      2. config['service_account_path'] (GOOGLE_APPLICATION_CREDENTIALS env
+         var, or 'service_account_path' in google-api.json) — a filesystem
+         path to the key file. This is the standard Google ADC convention
+         and still the right choice on any host with a persistent filesystem.
+    """
+    inline = config.get("service_account_json")
+    if inline:
+        try:
+            return json.loads(inline), None
+        except json.JSONDecodeError as e:
+            return None, (
+                "Invalid JSON in service_account_json / "
+                f"GOOGLE_APPLICATION_CREDENTIALS_JSON: {e}"
+            )
+
+    sa_path = config.get("service_account_path")
+    if not sa_path:
+        return None, None
+
+    sa_path = os.path.expanduser(sa_path)
+    if not os.path.exists(sa_path):
+        return None, f"Service account file not found: {sa_path}"
+
+    try:
+        with open(sa_path, "r") as f:
+            return json.load(f), None
+    except (json.JSONDecodeError, IOError) as e:
+        return None, f"Invalid service account file: {e}"
 
 
 def get_service_account_credentials(scopes: list):
@@ -153,22 +202,17 @@ def get_service_account_credentials(scopes: list):
         return None
 
     config = load_config()
-    sa_path = config.get("service_account_path")
+    info, error = _load_service_account_info(config)
 
-    if not sa_path:
+    if error:
+        print(f"Error: {error}", file=sys.stderr)
         return None
-
-    sa_path = os.path.expanduser(sa_path)
-    if not os.path.exists(sa_path):
-        print(
-            f"Error: Service account file not found: {sa_path}",
-            file=sys.stderr,
-        )
+    if not info:
         return None
 
     try:
-        credentials = service_account.Credentials.from_service_account_file(
-            sa_path, scopes=scopes
+        credentials = service_account.Credentials.from_service_account_info(
+            info, scopes=scopes
         )
         return credentials
     except Exception as e:
@@ -601,30 +645,24 @@ def check_credentials(service: str) -> dict:
                 result["available"] = False
                 result["error"] = "OAuth token expired and no refresh_token. Re-run --auth."
         else:
-            # Fall back to service account
-            sa_path = config.get("service_account_path")
-            if not sa_path:
+            # Fall back to service account (inline JSON or file path)
+            sa_data, sa_error = _load_service_account_info(config)
+            if sa_error:
+                result["error"] = sa_error
+            elif not sa_data:
                 result["error"] = (
                     "No OAuth token or service account found. Either:\n"
                     "         1. Run: python scripts/google_auth.py --auth --creds /path/to/client_secret.json\n"
-                    f"         2. Or add 'service_account_path' to {CONFIG_PATH}"
+                    f"         2. Or add 'service_account_path' (file) to {CONFIG_PATH}\n"
+                    "         3. Or set GOOGLE_APPLICATION_CREDENTIALS_JSON to the key's raw "
+                    "JSON content (for cloud hosts without a persistent filesystem)"
                 )
+            elif "client_email" not in sa_data or "private_key" not in sa_data:
+                result["error"] = "Service account JSON missing required fields (client_email, private_key)"
             else:
-                sa_path = os.path.expanduser(sa_path)
-                if not os.path.exists(sa_path):
-                    result["error"] = f"Service account file not found: {sa_path}"
-                else:
-                    try:
-                        with open(sa_path, "r") as f:
-                            sa_data = json.load(f)
-                        if "client_email" not in sa_data or "private_key" not in sa_data:
-                            result["error"] = "Service account JSON missing required fields (client_email, private_key)"
-                        else:
-                            result["available"] = True
-                            result["method"] = "service_account"
-                            result["client_email"] = sa_data.get("client_email")
-                    except (json.JSONDecodeError, IOError) as e:
-                        result["error"] = f"Invalid service account file: {e}"
+                result["available"] = True
+                result["method"] = "service_account"
+                result["client_email"] = sa_data.get("client_email")
 
         # GA4 also needs property ID
         if service == "ga4" and result["available"]:
@@ -665,20 +703,12 @@ def detect_tier() -> dict:
         has_authenticated = True
         auth_method = "oauth_token"
 
-    # Check service account
+    # Check service account (inline JSON or file path)
     if not has_authenticated:
-        sa_path = config.get("service_account_path")
-        if sa_path:
-            sa_path = os.path.expanduser(sa_path)
-            if os.path.exists(sa_path):
-                try:
-                    with open(sa_path, "r") as f:
-                        sa_data = json.load(f)
-                    if "client_email" in sa_data and "private_key" in sa_data:
-                        has_authenticated = True
-                        auth_method = "service_account"
-                except (json.JSONDecodeError, IOError):
-                    pass
+        sa_data, _sa_error = _load_service_account_info(config)
+        if sa_data and "client_email" in sa_data and "private_key" in sa_data:
+            has_authenticated = True
+            auth_method = "service_account"
 
     if has_authenticated and config.get("ga4_property_id"):
         has_ga4 = True
@@ -774,10 +804,18 @@ Google SEO API Setup Instructions
    python scripts/google_auth.py --check
 
 ENVIRONMENT VARIABLE ALTERNATIVES:
-   GOOGLE_API_KEY              - API key
-   GOOGLE_APPLICATION_CREDENTIALS - Path to service account JSON
-   GA4_PROPERTY_ID             - GA4 property ID (e.g., properties/123456789)
-   GSC_PROPERTY                - Default Search Console property
+   GOOGLE_API_KEY                    - API key
+   GOOGLE_APPLICATION_CREDENTIALS      - Path to service account JSON file
+   GOOGLE_APPLICATION_CREDENTIALS_JSON - Raw JSON content of the service
+                                          account key, for cloud hosts
+                                          (Render, Railway, Fly.io, CI
+                                          secrets) whose settings UI only
+                                          takes env var strings, not
+                                          uploaded files. Takes priority
+                                          over GOOGLE_APPLICATION_CREDENTIALS
+                                          when both are set.
+   GA4_PROPERTY_ID                   - GA4 property ID (e.g., properties/123456789)
+   GSC_PROPERTY                      - Default Search Console property
 """)
 
 
