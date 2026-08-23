@@ -16,10 +16,20 @@ Other platforms (OpenAI, Anthropic, Perplexity) have no free API tier —
 querying them costs money and needs a paid key. Scraping their consumer
 chat UIs to avoid paying would mean impersonating a browser against
 their bot detection and violating their Terms of Service; this script
-does not do that. Instead it is written provider-pluggable: set
-OPENAI_API_KEY / ANTHROPIC_API_KEY / PERPLEXITY_API_KEY later and this
-script picks them up with no code changes. Until then it runs
-Gemini-only and says so explicitly in its output.
+does not do that. Instead, each is fully implemented against its real
+paid API and gated on its own env var — OPENAI_API_KEY,
+ANTHROPIC_API_KEY, PERPLEXITY_API_KEY — so setting any of them (a paid
+subscription to the underlying API, not the consumer chat product)
+activates that provider with no code changes. With no keys set at all,
+only Gemini's free tier runs and every other provider reports exactly
+why it was skipped.
+
+Model IDs and response shapes for the paid providers (OPENAI_MODEL,
+ANTHROPIC_MODEL, PERPLEXITY_MODEL below) are correct as of this
+writing but each vendor's web-search tool is a moving target — if a
+provider starts returning ran=False with an HTTP error, check that
+provider's current API docs for the tool name / model ID before
+assuming the script is broken.
 
 Usage:
     python3 live_citation_check.py check "acme.com" "best crm for small business" [--json]
@@ -55,11 +65,19 @@ GEMINI_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 )
 
-# Provider registry. Each entry names the env var that gates it and a
-# callable that runs the query. Providers without a free tier are wired
-# in but documented as such; they raise a clear "not implemented" error
-# rather than silently pretending to run, so nobody mistakes a stub for
-# a real (paid) result.
+OPENAI_MODEL = "gpt-4o"
+OPENAI_URL = "https://api.openai.com/v1/responses"
+
+ANTHROPIC_MODEL = "claude-sonnet-4-5"
+ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
+ANTHROPIC_VERSION = "2023-06-01"
+
+PERPLEXITY_MODEL = "sonar-pro"
+PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions"
+
+# Provider registry. Each entry names the env var that gates it. All four
+# are fully implemented — the paid ones just need their own API key
+# (separate from that vendor's consumer subscription) to activate.
 PROVIDERS = {
     "gemini": {
         "env": "GEMINI_API_KEY",
@@ -163,27 +181,180 @@ def query_gemini(brand_or_domain: str, query: str) -> dict:
     }
 
 
-def _not_implemented(provider_name: str) -> dict:
+def _missing_key(provider_name: str) -> dict:
     info = PROVIDERS[provider_name]
-    key = os.environ.get(info["env"])
-    if not key:
-        return {
-            "provider": provider_name,
-            "ran": False,
-            "reason": (
-                f"{info['env']} not set. This provider has no free tier — "
-                f"get a paid key at {info['signup_url']} if you want it enabled."
-            ),
-        }
     return {
         "provider": provider_name,
         "ran": False,
         "reason": (
-            f"{info['env']} is set but the {provider_name} query implementation "
-            "is not wired up yet in this script. Contributions welcome — see "
-            "PROVIDERS registry and query_gemini() as the reference implementation."
+            f"{info['env']} not set. This provider has no free tier — "
+            f"get a paid key at {info['signup_url']} if you want it enabled."
         ),
     }
+
+
+def _post_json(url: str, *, headers: dict, payload: dict, provider_name: str):
+    """Shared SSRF-safe POST helper. Returns (response, None) or (None, error_dict)."""
+    import requests
+
+    try:
+        validate_url_strict(url)
+        with safe_requests_session(url) as session:
+            response = session.post(url, headers=headers, json=payload, timeout=30)
+    except URLSafetyError as exc:
+        return None, {"provider": provider_name, "ran": False, "reason": f"URL safety check failed: {exc}"}
+    except requests.RequestException as exc:
+        return None, {"provider": provider_name, "ran": False, "reason": f"Request failed: {exc}"}
+
+    if response.status_code != 200:
+        return None, {
+            "provider": provider_name,
+            "ran": False,
+            "reason": f"HTTP {response.status_code}: {response.text[:300]}",
+        }
+    return response, None
+
+
+def query_openai(brand_or_domain: str, query: str) -> dict:
+    """Query ChatGPT (OpenAI Responses API) with the built-in web_search tool."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        return _missing_key("openai")
+
+    domain = _domain_of(brand_or_domain)
+    payload = {
+        "model": OPENAI_MODEL,
+        "input": query,
+        "tools": [{"type": "web_search"}],
+    }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+    response, error = _post_json(OPENAI_URL, headers=headers, payload=payload, provider_name="openai")
+    if error:
+        return error
+
+    data = response.json()
+    answer_text = ""
+    cited_urls = []
+    for item in data.get("output", []):
+        if item.get("type") != "message":
+            continue
+        for part in item.get("content", []):
+            if part.get("type") == "output_text":
+                answer_text += part.get("text", "")
+                for annotation in part.get("annotations", []):
+                    if annotation.get("type") == "url_citation" and annotation.get("url"):
+                        cited_urls.append(annotation["url"])
+
+    domain_cited = any(domain in u.lower() for u in cited_urls)
+    domain_mentioned = domain in answer_text.lower() or brand_or_domain.lower() in answer_text.lower()
+
+    return {
+        "provider": "openai",
+        "ran": True,
+        "cited": domain_cited,
+        "mentioned_in_answer_text": domain_mentioned,
+        "cited_urls": cited_urls,
+        "cited_urls_count": len(cited_urls),
+        "answer_excerpt": answer_text[:500],
+    }
+
+
+def query_anthropic(brand_or_domain: str, query: str) -> dict:
+    """Query Claude (Anthropic Messages API) with the server-side web_search tool."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return _missing_key("anthropic")
+
+    domain = _domain_of(brand_or_domain)
+    payload = {
+        "model": ANTHROPIC_MODEL,
+        "max_tokens": 1024,
+        "messages": [{"role": "user", "content": query}],
+        "tools": [{"type": "web_search_20250305", "name": "web_search"}],
+    }
+    headers = {
+        "x-api-key": api_key,
+        "anthropic-version": ANTHROPIC_VERSION,
+        "Content-Type": "application/json",
+    }
+
+    response, error = _post_json(ANTHROPIC_URL, headers=headers, payload=payload, provider_name="anthropic")
+    if error:
+        return error
+
+    data = response.json()
+    answer_text = ""
+    cited_urls = []
+    for block in data.get("content", []):
+        if block.get("type") == "text":
+            answer_text += block.get("text", "")
+            for citation in block.get("citations", []) or []:
+                url = citation.get("url")
+                if url:
+                    cited_urls.append(url)
+        elif block.get("type") == "web_search_tool_result":
+            for result in block.get("content", []) or []:
+                url = result.get("url")
+                if url:
+                    cited_urls.append(url)
+
+    domain_cited = any(domain in u.lower() for u in cited_urls)
+    domain_mentioned = domain in answer_text.lower() or brand_or_domain.lower() in answer_text.lower()
+
+    return {
+        "provider": "anthropic",
+        "ran": True,
+        "cited": domain_cited,
+        "mentioned_in_answer_text": domain_mentioned,
+        "cited_urls": cited_urls,
+        "cited_urls_count": len(cited_urls),
+        "answer_excerpt": answer_text[:500],
+    }
+
+
+def query_perplexity(brand_or_domain: str, query: str) -> dict:
+    """Query Perplexity's Sonar API, which returns real web citations natively."""
+    api_key = os.environ.get("PERPLEXITY_API_KEY")
+    if not api_key:
+        return _missing_key("perplexity")
+
+    domain = _domain_of(brand_or_domain)
+    payload = {
+        "model": PERPLEXITY_MODEL,
+        "messages": [{"role": "user", "content": query}],
+    }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+    response, error = _post_json(PERPLEXITY_URL, headers=headers, payload=payload, provider_name="perplexity")
+    if error:
+        return error
+
+    data = response.json()
+    choices = data.get("choices", [])
+    answer_text = choices[0]["message"]["content"] if choices else ""
+    cited_urls = data.get("citations", []) or []
+
+    domain_cited = any(domain in u.lower() for u in cited_urls)
+    domain_mentioned = domain in answer_text.lower() or brand_or_domain.lower() in answer_text.lower()
+
+    return {
+        "provider": "perplexity",
+        "ran": True,
+        "cited": domain_cited,
+        "mentioned_in_answer_text": domain_mentioned,
+        "cited_urls": cited_urls,
+        "cited_urls_count": len(cited_urls),
+        "answer_excerpt": answer_text[:500],
+    }
+
+
+QUERY_FUNCTIONS = {
+    "gemini": query_gemini,
+    "openai": query_openai,
+    "anthropic": query_anthropic,
+    "perplexity": query_perplexity,
+}
 
 
 def init_db() -> sqlite3.Connection:
@@ -239,10 +410,8 @@ def cmd_check(brand_or_domain: str, query: str, providers: list) -> dict:
     conn = init_db()
     results = []
     for provider in providers:
-        if provider == "gemini":
-            result = query_gemini(brand_or_domain, query)
-        elif provider in PROVIDERS:
-            result = _not_implemented(provider)
+        if provider in QUERY_FUNCTIONS:
+            result = QUERY_FUNCTIONS[provider](brand_or_domain, query)
         else:
             result = {"provider": provider, "ran": False, "reason": "Unknown provider."}
         store_result(conn, brand_or_domain, query, result)

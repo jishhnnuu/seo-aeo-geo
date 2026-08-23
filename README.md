@@ -173,6 +173,7 @@ claude
 | `/seo profound [command]` | LLM citation tracking with time-series data (extension) |
 | `/seo bing [command] <url>` | Bing Webmaster Tools + IndexNow URL submission (extension) |
 | `/seo unlighthouse <url>` | Multi-page Lighthouse runner, runs locally (extension) |
+| `/seo screaming-frog <url>` | Enterprise-scale crawling via a licensed Screaming Frog SEO Spider CLI (extension) |
 
 ## Features
 

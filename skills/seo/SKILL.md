@@ -246,13 +246,34 @@ installer to activate (see each extension's `install.sh`/`install.ps1`):
 
 All optional extensions are reachable through `/seo` subcommands once
 installed: firecrawl, dataforseo, and image-gen, plus `/seo ahrefs`,
-`/seo bing`, `/seo profound`, `/seo seranking`, and `/seo unlighthouse`.
-Each installs as its own sub-skill, so the model also auto-routes to their
-descriptions without the `/seo` prefix.
+`/seo bing`, `/seo profound`, `/seo seranking`, `/seo unlighthouse`, and
+`/seo screaming-frog`. Each installs as its own sub-skill, so the model
+also auto-routes to their descriptions without the `/seo` prefix.
 
 - **seo-firecrawl** -- Full-site crawling and site mapping via Firecrawl MCP. Install
   via `extensions/firecrawl/install.sh` (Unix) or `extensions/firecrawl/install.ps1`
   (Windows). Once installed, invoke via `/seo firecrawl <command>`.
+- **seo-screaming-frog** -- Enterprise-scale crawling (tens of
+  thousands to millions of URLs, bulk CSV export, redirect-chain
+  mapping) via a Screaming Frog SEO Spider licence you already own.
+  Install via `extensions/screaming-frog/install.sh`. Invoke via
+  `/seo screaming-frog <url>`.
+
+### Free-tier ceiling vs. paid coverage
+
+Everything in `skills/` and `scripts/` runs with zero paid subscriptions
+— free APIs (Moz, Bing Webmaster, Common Crawl, GSC/GA4/PSI/CrUX,
+Gemini's free tier), or fully local/deterministic scripts. That ceiling
+is real and worth stating plainly rather than pretending it doesn't
+exist, so paid users know exactly which extension closes which gap:
+
+| Free-tier ceiling | What it looks like | Extension that removes it |
+|---|---|---|
+| Crawl depth capped ~500 pages | `seo-audit`'s built-in parallel-subagent crawl | `seo-screaming-frog` (licensed CLI, effectively unlimited) or `seo-firecrawl` (API-driven, JS-heavy sites, no desktop install) |
+| No proprietary backlink index | `seo-backlinks` uses Moz/Bing/Common Crawl only — smaller, slower-refreshed link graphs than a funded commercial crawler | `seo-ahrefs` (Ahrefs' own index via official MCP) |
+| Single-shot, single-platform live AI citation check | `scripts/live_citation_check.py` running Gemini-only (free tier) | Same script with `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`/`PERPLEXITY_API_KEY` set (paid, per-call), or `seo-profound`/`seo-seranking` for continuously-polled, multi-platform time-series instead of on-demand single queries |
+| Voice-search eligibility is a featured-snippet proxy, not a real device query | `scripts/voice_search_live_check.py` | No extension closes this — no vendor (free or paid) exposes an API to query a real smart speaker as an end user would. This is a structural product-level gap, not a licensing one. |
+| Keyword volume/difficulty/SERP tracking needs a paid data source | GSC gives your own historical query data only | `seo-dataforseo` (keyword volume, difficulty, live SERPs) |
 
 ## Subagents
 
