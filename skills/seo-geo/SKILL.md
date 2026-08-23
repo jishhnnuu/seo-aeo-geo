@@ -360,6 +360,9 @@ Generate `GEO-ANALYSIS.md` with:
 8. **Top 5 Highest-Impact Changes**
 9. **Schema Recommendations** (for AI discoverability)
 10. **Content Reformatting Suggestions** (specific passages to rewrite)
+11. **Live Citation Check** (if `GEMINI_API_KEY` is set — real query result
+    from `live_citation_check.py`, not inferred; otherwise note it as
+    skippable/optional and give the free-key setup link)
 
 ---
 
@@ -389,6 +392,44 @@ Generate `GEO-ANALYSIS.md` with:
 3. Establish YouTube channel with content mentions
 4. Implement comprehensive entity linking (sameAs across platforms)
 5. Develop unique tools or calculators
+
+## Live Citation Checking (First-Party, Free Tier)
+
+Every criterion above (citability score, structural readability, crawler
+access) measures whether a page *could* be cited — none of it actually
+asks an AI platform a real question and checks whether the brand/domain
+got cited. `scripts/live_citation_check.py check "<brand-or-domain>"
+"<query>"` closes that gap by querying Gemini (with Google Search
+grounding) live and checking the returned citations for the target
+domain. Time-series results are stored in SQLite; use
+`live_citation_check.py history "<brand-or-domain>"` to see the trend.
+
+**Only Gemini runs for free.** aistudio.google.com issues a free
+`GEMINI_API_KEY` with no card required (rate-limited). OpenAI, Anthropic,
+and Perplexity have no free API tier — the script is wired for all four
+providers and auto-skips any whose key isn't set, reporting exactly why
+in the `reason` field, so paid providers can be added later with zero
+code changes. Do not scrape ChatGPT/Perplexity's consumer web UI to get
+around this — it violates their Terms of Service and breaks constantly
+against bot detection; report the true (free-tier-only) coverage instead
+of faking broader coverage. For paid, continuously-polled multi-platform
+coverage, use the `seo-profound` / `seo-dataforseo` / `seo-seranking`
+extensions instead — this script is the free/local complement, not a
+replacement for them.
+
+### Voice-search live eligibility
+
+There is no public API, free or paid, that lets a script ask a smart
+speaker a question and read back the answer — Amazon and Google don't
+expose that surface. The closest honest, scriptable proxy: voice
+assistants overwhelmingly read Google's featured-snippet / position-1
+answer for factual queries, so live-checking that position is a real
+signal, not a guarantee. `scripts/voice_search_live_check.py check
+"<brand-or-domain>" "<question-query>"` does this via Google's
+Programmable Search Engine JSON API (also free — 100 queries/day, see
+the script's own docstring for setup). Pair its output with
+`references/voice-search-optimization.md` for the structural checklist
+that makes a page eligible for that position in the first place.
 
 ## DataForSEO Integration (Optional)
 
