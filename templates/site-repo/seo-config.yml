@@ -1,0 +1,53 @@
+# Growth-loop configuration for THIS website's repo.
+# Lives at the repo root. Read by seo-planner, seo-tester, and seo-publisher.
+# Fill in the fields marked REQUIRED before the first scheduled run — leave
+# the rest on their defaults until you have a reason to change them.
+
+site:
+  url: "https://example.com"          # REQUIRED — the live site this config governs
+  business_type: "auto"                # auto | saas | local | ecommerce | publisher | agency
+  platform: "git-static"               # REQUIRED — git-static | wordpress | shopify | webflow | other
+  deploy_branch: "main"                # branch that your host auto-deploys from (git-static only)
+  build_command: ""                    # e.g. "npm run build" — leave blank if there's no build step
+
+  # --- How the fixer maps a live URL back to the source file that produces it.
+  # This is the difference between "the audit found a bad title on /about" and
+  # "the fixer knows to edit src/pages/about.astro". Leave on auto and it
+  # detects the framework from the repo; set explicitly if detection is wrong.
+  framework: "auto"                    # auto | astro | next | nuxt | hugo | jekyll | eleventy | gatsby | sveltekit | plain-html
+  content_dir: ""                      # optional hint, e.g. "src/content" | "_posts" | "content"
+  output_dir: ""                       # build output the tester inspects, e.g. "dist" | "_site" | "build" | "public"
+
+  # --- Netlify (leave blank if you don't use it) ---
+  # Publishing needs NO Netlify token: merging to deploy_branch triggers the
+  # build, because Netlify is watching this repo. This name is used only to
+  # construct the deploy-preview URL for a pull request, so seo-tester can
+  # audit the REAL rendered page before merge rather than just the source:
+  #   https://deploy-preview-<PR number>--<netlify_site_name>.netlify.app
+  # Find it in Netlify under Site configuration -> Site details -> Site name.
+  netlify_site_name: ""
+
+autonomy:
+  # gated (recommended): seo-publisher only ships a change after seo-tester
+  #   returns VERDICT: PASS. No human approval needed day to day — the test
+  #   suite IS the approval gate. This is what "fully autonomous" should mean
+  #   for a system that writes to a live website.
+  # ungated: seo-publisher ships as soon as seo-fixer-writer/content agents
+  #   finish, with no test gate at all. Not recommended, especially in the
+  #   first few cycles — start gated, relax later once you trust the loop.
+  mode: "gated"
+
+cadence:
+  audit: "weekly"          # seo-planner + full seo-audit
+  build: "twice_weekly"    # seo-fixer-writer + content agents, opens a PR
+  distribute: "daily"      # IndexNow ping + Search Console checks for anything newly live
+
+testing:
+  performance_regression_threshold: 5   # Lighthouse/Unlighthouse points allowed to drop before seo-tester fails the change
+
+# --- Platform-specific secrets (set these as GitHub Actions repo secrets,
+#     never commit real values here) ---
+# wordpress: WP_APP_USER, WP_APP_PASSWORD
+# shopify:   SHOPIFY_ACCESS_TOKEN
+# webflow:   WEBFLOW_API_TOKEN
+# google (optional, Tier 1+): see docs/GROWTH-LOOP.md "Google credentials"

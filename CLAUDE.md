@@ -4,9 +4,10 @@
 
 This repository contains **Claude SEO**, a Tier 4 Claude Code skill for comprehensive
 SEO analysis across all industries. It follows the Agent Skills open standard and the
-3-layer architecture (directive, orchestration, execution). 25 sub-skills (21 core +
-1 orchestrator + 1 framework integration + 2 extension mirrors), 18 sub-agents (15 core +
-1 framework integration + 2 extension mirrors), and an extensible reference
+3-layer architecture (directive, orchestration, execution). 28 sub-skills (23 core +
+1 orchestrator + 1 growth-loop onboarding + 1 framework integration + 2 extension
+mirrors), 24 sub-agents (15 core + 1 framework integration + 2 extension mirrors +
+1 confirmed-fix writer + 5 growth-loop agents), and an extensible reference
 system cover technical SEO, content quality,
 schema markup, image optimization, sitemap architecture, AI search optimization,
 local SEO (GBP, citations, reviews, map pack), maps intelligence, semantic topic
@@ -61,6 +62,7 @@ claude-seo/
       SKILL.md
       references/                # Marketplace API endpoints
     seo-dataforseo/SKILL.md     # Live SEO data via DataForSEO MCP (extension mirror)
+    seo-onboard/SKILL.md        # Growth Loop onboarding for a website repo
     seo-image-gen/              # AI image generation for SEO assets (extension mirror)
       SKILL.md
       references/                # Image gen reference files (7 files)
@@ -83,6 +85,11 @@ claude-seo/
     seo-drift.md                 # SEO drift monitoring
     seo-ecommerce.md             # E-commerce SEO analysis
     seo-flow.md                  # FLOW framework integration
+    seo-planner.md               # Growth Loop: strategist / roadmap owner
+    seo-resolver.md              # Growth Loop: seven-rung unblocker, decision authority
+    seo-outreach.md              # Growth Loop: citations, digital PR, queued drafts
+    seo-tester.md                # Growth Loop: pre/post-publish QA gate
+    seo-publisher.md             # Growth Loop: gated merge / deploy / CMS publish
   hooks/                           # Quality gate hooks
     hooks.json                   # PostToolUse schema validation
   scripts/                         # 53 Python execution scripts
@@ -139,6 +146,11 @@ claude-seo/
     verify_release.py            # Verify checkout integrity against a release manifest
     mobile_analysis.py           # Mobile rendering analysis (gitignored, dev-only)
   schema/                          # Schema.org JSON-LD templates
+  templates/                       # Per-site Growth Loop template (copied into a website's own repo)
+    ONBOARD-A-SITE.md              # Human-facing onboarding walkthrough
+    site-repo/seo-config.yml       # Business/platform config for a managed site
+    site-repo/.github/workflows/seo-growth-loop.yml  # Scheduled loop
+    site-repo/reports/HUMAN-INBOX.md # Non-blocking queue of true human blockers
   extensions/                      # Optional add-on install helpers
     dataforseo/                  # DataForSEO MCP install scripts
     firecrawl/                   # Firecrawl MCP install scripts
@@ -176,6 +188,7 @@ claude-seo/
 | `/seo plan <type>` | Strategic planning by industry |
 | `/seo programmatic [url\|plan]` | Programmatic SEO analysis |
 | `/seo competitor-pages [url\|generate]` | Competitor comparison pages |
+| `/seo onboard [url]` | Set up the autonomous Growth Loop on a website's repo |
 | `/seo flow [stage] [url\|topic]` | FLOW framework prompts |
 | `/seo google [command] [url]` | Google SEO APIs (GSC, PSI, CrUX, GA4) |
 | `/seo dataforseo [command]` | Live SEO data (extension) |
@@ -228,6 +241,7 @@ Part of the Claude Code skill family:
 - [Claude Banana](https://github.com/AgriciDaniel/banana-claude) -- standalone image gen (bundled as extension here)
 - [Claude Blog](https://github.com/AgriciDaniel/claude-blog) -- companion blog engine, consumes SEO findings
 - [AI Marketing Claude](https://github.com/zubair-trabzada/ai-marketing-claude) -- community marketing suite (copy, emails, ads, funnels, CRO)
+- [Growth Loop](docs/GROWTH-LOOP.md) -- autonomous plan/audit/fix/test/publish/distribute loop for any website, built on top of this plugin
 
 ## Key Principles
 
@@ -236,60 +250,19 @@ Part of the Claude Code skill family:
 3. **Parallel Execution**: Full audits spawn up to 15 subagents simultaneously
 4. **Extension System**: DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse, and Screaming Frog extensions
 
-## Repository Topology (public + private)
+## Repository Topology
 
-This project is mirrored across two GitHub remotes that share git history.
-Both originate from the same local checkout; neither is a GitHub fork of
-the other (different orgs, no parent/child relationship in the GitHub UI).
-
-| Remote | URL | Visibility | Role |
-|---|---|---|---|
-| `origin` | `https://github.com/AgriciDaniel/claude-seo` | **Public** | Published distribution. Users discover, clone, and install from here. `main` only reflects released history. |
-| `aimh` | `https://github.com/AI-Marketing-Hub/claude-seo` | **Private** | Working repo inside the AI Marketing Hub org. Daily development. v2 branch + post-release work lives here before promotion to public. |
-
-### Workflow
-
-Daily development:
-- Work on `v2` (or feature branches off `v2`) locally.
-- `git push aimh <branch>` to publish work-in-progress to the private repo
-  (Dependabot, Actions, and CI run there).
-
-Promoting to public on release:
-1. Merge `v2` into local `main` when ready to release (fast-forward).
-2. Tag the release locally (`git tag -a vX.Y.Z`).
-3. Push the tag and main to **both** remotes in this order:
-   - First: `git push aimh main && git push aimh vX.Y.Z`
-   - Then: `git push origin vX.Y.Z && git push origin main`
-   - The "tag before merge" sequence (see `feedback_push_caution` memory)
-     applies on `origin` to avoid the `curl|bash` outage window where
-     users pull a tag that doesn't yet point at code on `main`.
-4. `gh release create vX.Y.Z --repo AgriciDaniel/claude-seo` (public-only).
-5. `/release-blog` to publish the release post.
-
-### Safety rules
-
-- **Never push to `origin/main` autonomously.** The public is release-only;
-  pushes are user-authorized per-release.
-- **`aimh` accepts day-to-day pushes.** No release-gate ceremony required
-  for the private remote.
-- **Tags push to private first.** Historical pre-release illustration: v2.0.0
-  once lived on `aimh` before `origin`. Current released tags through v2.2.4
-  are on both remotes.
-- **History stays shared.** Never rewrite history on either remote with
-  force-push unless explicitly authorized for that specific operation.
-
-### Verifying the topology
+This repo has a single remote, `origin`
+(`https://github.com/jishhnnuu/seo-aeo-geo`), and a normal `main`-branch
+release flow: develop on a feature branch, open a PR into `main`, tag the
+release on `main` after merge. There is no public/private split and no
+second remote — the upstream project's two-remote workflow does not apply
+here.
 
 ```bash
-# Both remotes configured
-git remote -v        # expects: origin (public) + aimh (private)
-
-# Both share main HEAD
-git ls-remote --heads aimh main
-git ls-remote --heads origin main   # origin = aimh/main + 1 public-branding commit (intentional; see docs/WORKFLOW-public-private.md)
+git remote -v                        # expects: origin only
+git ls-remote --heads origin main
 ```
-
-Full workflow reference: `docs/WORKFLOW-public-private.md`.
 
 ## Release Blog Post
 

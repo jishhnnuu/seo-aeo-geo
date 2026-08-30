@@ -20,8 +20,9 @@ installs expose this command automatically. Repository users run
 launcher path. Never invoke bundled scripts with a bare Python interpreter.
 
 Comprehensive SEO analysis across all industries (SaaS, local services,
-e-commerce, publishers, agencies). Orchestrates 24 sub-skills (21 core + 1 framework
-integration + 2 extension mirrors) and 18 sub-agents. A separate optional Firecrawl
+e-commerce, publishers, agencies). Orchestrates 27 sub-skills (23 core + 1 growth-loop onboarding + 1 framework
+integration + 2 extension mirrors), 18 audit sub-agents, 1 confirmed-fix
+writer, and 5 growth-loop agents. A separate optional Firecrawl
 extension is also installable (see "Optional Extensions" below).
 
 ## Quick Reference
@@ -54,6 +55,7 @@ extension is also installable (see "Optional Extensions" below).
 | `/seo firecrawl [command] <url>` | Full-site crawling and site mapping (extension) |
 | `/seo dataforseo [command]` | Live SEO data via DataForSEO (extension) |
 | `/seo image-gen [use-case] <description>` | AI image generation for SEO assets (extension) |
+| `/seo onboard [url]` | Set up the autonomous Growth Loop on a website's repo |
 | `/seo flow [stage] [url\|topic]` | FLOW framework: evidence-led prompts for Find, Leverage, Optimize, Win, or Local stages |
 | `/seo setup` | Explicitly create or refresh the isolated Python runtime and Chromium |
 | `/seo doctor` | Check runtime readiness without changing the system |
@@ -264,9 +266,10 @@ Weighted aggregate of all categories:
 
 ## Sub-Skills
 
-This skill orchestrates 24 sub-skills (21 core + 1 framework integration + 2 extension
-mirrors). The orchestrator itself (`seo`) is the 25th in `skills/`, but does not
-orchestrate itself, so it is not enumerated below.
+This skill orchestrates 27 sub-skills (23 core + 1 growth-loop onboarding +
+1 framework integration + 2 extension mirrors). The orchestrator itself (`seo`)
+lives in `skills/` too, but does not orchestrate itself, so it is not
+enumerated below.
 
 1. **seo-audit** -- Full website audit with parallel delegation
 2. **seo-page** -- Deep single-page analysis
@@ -292,6 +295,9 @@ orchestrate itself, so it is not enumerated below.
 22. **seo-dataforseo** -- Live SEO data via DataForSEO MCP (extension mirror)
 23. **seo-image-gen** -- AI image generation for SEO assets via Gemini (extension mirror)
 24. **seo-flow** -- FLOW framework integration (Find -> Leverage -> Optimize -> Win, 41 AI prompts, CC BY 4.0)
+25. **seo-onboard** -- Growth Loop setup for a website repo (copies the per-site template in, installs credentials as repo secrets, triggers the first audit)
+26. **seo-aso** -- App Store Optimization for App Store / Google Play listings
+27. **seo-fix** -- Opt-in fixer for audit findings: dry-run preview by default, writes only after per-change confirmation
 
 ### Optional Extensions
 
@@ -331,7 +337,9 @@ exist, so paid users know exactly which extension closes which gap:
 
 ## Subagents
 
-For parallel analysis during audits:
+### Audit agents
+
+For parallel analysis during audits (read-only):
 - `seo-technical` -- Crawlability, indexability, security, CWV
 - `seo-content` -- E-E-A-T, readability, thin content
 - `seo-schema` -- Detection, validation, generation
@@ -350,6 +358,23 @@ For parallel analysis during audits:
 - `seo-flow` -- FLOW framework prompts (conditional: spawned for content strategy workflows)
 - `seo-dataforseo` -- Live SERP, keyword, backlink, local SEO data (extension, optional)
 - `seo-image-gen` -- SEO image audit and generation plan (extension, optional)
+
+### Write-capable agent
+
+Never spawned by an audit; used only by the `seo-fix` skill after the user
+confirms the diffs:
+- `seo-fixer-writer` -- Applies AUTO-class fixes. Backs up first, idempotent, git-aware, re-verifies each change
+
+### Growth Loop agents
+
+For the autonomous plan -> audit -> fix -> test -> publish -> distribute loop
+(see `docs/GROWTH-LOOP.md`). Not spawned by `/seo audit`; they run from a
+site repo's scheduled workflow or from `/seo onboard`:
+- `seo-planner` -- Strategist: turns audit + GSC/GA4 signals into a prioritized, dependency-sequenced roadmap, quick wins first. Writes planning docs only
+- `seo-resolver` -- The unblocker: mandatory seven-rung solution ladder that every other agent must call before failing, skipping, or escalating; holds binding decision authority for the cycle
+- `seo-outreach` -- Off-page authority: citations, directory submissions, linkable-asset proposals, broken-link prospecting. Drafts and queues, never auto-sends. White-hat only
+- `seo-tester` -- QA gate: pre-publish checks (build, links, schema, drift, performance) and post-publish verification. No write access; can only pass, fail, and report
+- `seo-publisher` -- Release engineer: the only agent allowed to merge, push to a deploy branch, or call a CMS publish API, and only on a fresh `VERDICT: PASS` from `seo-tester`
 
 ## Error Handling
 

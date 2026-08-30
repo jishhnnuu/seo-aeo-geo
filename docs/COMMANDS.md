@@ -687,6 +687,31 @@ Multi-page Lighthouse audit via Unlighthouse (extension, MIT, no API quota). **P
 
 ---
 
+### `/seo onboard [url]`
+
+Put a website under the autonomous Growth Loop. Run this in a Claude Code
+session opened on **that website's own repo**, not on this plugin repo. It
+copies `templates/site-repo/` in (`seo-config.yml`, the scheduled
+`seo-growth-loop.yml` workflow, and a `reports/` folder), detects the
+framework and build command, installs any credentials it can find as that
+repo's GitHub Actions secrets, tags the repo with the `seo-growth-loop`
+topic, and triggers the first audit run.
+
+The skill is `user-invocable`, so plain language reaches it too — "optimize
+this website", "set up SEO here". It asks its genuinely unanswerable
+questions once, upfront, then runs to completion without interrupting.
+
+```
+/seo onboard                        # infer the site from the repo
+/seo onboard https://example.com    # state the site explicitly
+```
+
+Requires a `workflow`-scoped GitHub token to push `.github/workflows/`.
+See [docs/GROWTH-LOOP.md](GROWTH-LOOP.md) for the loop's design, the agent
+roster, and what it will and will not do automatically.
+
+---
+
 ## Quick Reference
 
 | Command | Use Case |
@@ -713,6 +738,7 @@ Multi-page Lighthouse audit via Unlighthouse (extension, MIT, no API quota). **P
 | `/seo programmatic [url\|plan]` | Programmatic SEO analysis |
 | `/seo competitor-pages [url\|generate]` | Competitor comparison pages |
 | `/seo flow [stage] [url\|topic]` | FLOW framework prompts |
+| `/seo onboard [url]` | Set up the autonomous Growth Loop on a website's repo |
 | `/seo google [command] [url]` | Google SEO APIs (GSC, PSI, CrUX, GA4) |
 | `/seo dataforseo [command]` | Live SEO data (extension) |
 | `/seo image-gen [use-case] <desc>` | AI image generation (extension) |

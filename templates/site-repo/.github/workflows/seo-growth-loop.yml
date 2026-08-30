@@ -1,0 +1,213 @@
+# Autonomous SEO/AEO/GEO growth loop for this website.
+#
+# Runs the claude-seo-unified plugin (planner -> audit -> fix/content ->
+# test -> publish -> distribute) on a schedule, using YOUR Claude
+# subscription (via CLAUDE_CODE_OAUTH_TOKEN) rather than a separate,
+# pay-per-token API key. See docs/GROWTH-LOOP.md for the full setup guide.
+#
+# BEFORE FIRST RUN:
+#   1. Fill in seo-config.yml at the repo root.
+#   2. Set the secrets listed under "env:" below. The SHARED ones
+#      (CLAUDE_CODE_OAUTH_TOKEN, GOOGLE_API_KEY,
+#      GOOGLE_APPLICATION_CREDENTIALS_JSON, MOZ_API_KEY,
+#      BING_WEBMASTER_API_KEY) are identical across every site you run this
+#      on — set them ONCE as GitHub *organization* secrets and every site
+#      repo inherits them. Only the PER-SITE ones (GSC_PROPERTY,
+#      GA4_PROPERTY_ID, INDEXNOW_KEY, and any CMS token) go on this repo.
+#      Every one of them is optional: the loop degrades to lab-only data
+#      rather than failing when a credential is absent.
+#   3. Turn on branch protection on your deploy branch requiring the
+#      "test-and-publish" status check to pass before merge
+#      (belt-and-suspenders alongside seo-publisher's own precondition).
+
+name: SEO Growth Loop
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"        # plan + full audit: Monday 06:00 UTC
+    - cron: "0 6 * * 2,4"      # fix + content build: Tuesday & Thursday 06:00 UTC
+    - cron: "0 7 * * *"        # distribution + indexing check: daily 07:00 UTC
+  pull_request:
+    branches: [seo/**]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}        # lets you trigger any job manually from the Actions tab
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
+# Every bundled script in the plugin reads its credentials from these exact
+# environment variables (with a config-file fallback we don't need on an
+# ephemeral runner). Declared once at workflow level so all four jobs
+# inherit them — nothing is written to disk.
+env:
+  # --- SHARED across all your sites: set as ORGANIZATION secrets ---
+  GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}                                    # Tier 0: PageSpeed Insights, CrUX, CrUX History
+  GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}  # Tier 1: Search Console + Indexing API (paste the service-account JSON inline)
+  MOZ_API_KEY: ${{ secrets.MOZ_API_KEY }}                                          # free-tier backlink data
+  BING_WEBMASTER_API_KEY: ${{ secrets.BING_WEBMASTER_API_KEY }}                    # Bing Webmaster Tools
+  # --- PER-SITE: set as secrets on THIS repo ---
+  GSC_PROPERTY: ${{ secrets.GSC_PROPERTY }}                                        # e.g. sc-domain:example.com
+  GA4_PROPERTY_ID: ${{ secrets.GA4_PROPERTY_ID }}                                  # Tier 2: GA4 organic traffic
+  INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}                                        # per-site host key
+  INDEXNOW_KEY_LOCATION: ${{ secrets.INDEXNOW_KEY_LOCATION }}                      # optional, if the key file isn't at the site root
+  # --- PER-SITE CMS credentials: only the ones your platform needs ---
+  WP_APP_USER: ${{ secrets.WP_APP_USER }}
+  WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+  SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+  WEBFLOW_API_TOKEN: ${{ secrets.WEBFLOW_API_TOKEN }}
+  # --- lets the agents use the `gh` CLI (issue sync, PR creation) ---
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  # ---- Monday: strategy + full audit. Writes reports/ only, no site changes. ----
+  plan-and-audit:
+    if: github.event.schedule == '0 6 * * 1' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
+          plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
+          prompt: >
+            Read seo-config.yml at the repo root. Run the seo-planner agent
+            to refresh reports/ROADMAP.md, reports/CONTENT-CALENDAR.md,
+            reports/KPI-TRACKER.md, and reports/HUMAN-INBOX.md, using the
+            most recent audit if one exists. Then run a full /seo audit
+            against site.url from seo-config.yml. Commit reports/ directly
+            to the default branch with message "chore(seo): weekly plan +
+            audit". Do not touch any file outside reports/. Finally, sync
+            reports/HUMAN-INBOX.md to a single pinned GitHub issue titled
+            "Growth Loop: needs your input" — create it with `gh issue
+            create` if it doesn't exist yet (search open issues with that
+            exact title first), otherwise overwrite its body with `gh
+            issue edit --body-file` so it always reflects the current
+            queue. This issue is informational, never a blocker — say so
+            in the issue body. If the queue is empty, the body should say
+            so plainly rather than leaving stale items. If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
+          claude_args: |
+            --allowedTools "Bash,Read,Write,Glob,Grep,Task"
+
+  # ---- Tue/Thu: fixer + content agents, opens a PR. Never pushes to main directly. ----
+  build:
+    if: github.event.schedule == '0 6 * * 2,4' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
+          plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
+          prompt: >
+            First, preflight: confirm every credential this run needs
+            actually works, by making a real call with each rather than
+            checking that a file or env var exists — GOOGLE_API_KEY against
+            PageSpeed Insights, the service account against Search Console
+            sites.list for this property, GA4 if configured. Record the
+            result in reports/PREFLIGHT.md. A credential that is present but
+            unauthorized is a different problem from one that is absent;
+            name which. Missing credentials degrade this run rather than
+            stopping it — proceed with what works and state plainly in the
+            run summary what data was unavailable and what it cost.
+            Then read reports/ROADMAP.md's "This cycle" section. Before editing
+            anything, establish the URL-to-source mapping for this repo:
+            read site.framework / site.content_dir / site.output_dir from
+            seo-config.yml, and if framework is "auto", detect it from the
+            repo (package.json dependencies, astro.config.*, next.config.*,
+            _config.yml, config.toml, .eleventy.js). Then, for each finding,
+            locate the source file that actually produces the affected URL —
+            confirm it by grepping the repo for the exact offending string
+            (the current title text, meta description, or heading) rather
+            than assuming a path convention. Never edit files under
+            site.output_dir; that is generated output and your change would
+            be overwritten by the next build. If you cannot confidently map
+            a finding to a source file, do not skip it and do not guess —
+            hand it to the seo-resolver agent, which will try the repo's
+            build output, the rendered page's own markup, git history for
+            the string, and framework-specific routing conventions before
+            anything is set aside. Create a branch
+            named seo/<date>-<short-slug>. For each AUTO-tier finding, run
+            /seo fix with the diffs pre-approved by the fact that they are
+            listed as AUTO-tier in the roadmap (seo-fixer-writer still
+            re-verifies each one after applying it). For each content item
+            on the roadmap, use the matching content brief to draft the
+            page or post as a file in this repo. Run the seo-outreach agent
+            against any off-page/citation items on the roadmap — it follows
+            its own non-blocking rules and writes reports/OUTREACH-LOG.md
+            and queues anything needing a human action to
+            reports/HUMAN-INBOX.md rather than waiting. Commit everything
+            to the branch and open a pull request against seo-config.yml's
+            site.deploy_branch, describing exactly what changed and why,
+            with a link to the roadmap items it addresses. Do not merge it
+            yourself. If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
+          claude_args: |
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Task"
+
+  # ---- Any PR opened by the build job: test, then publish only if it passes. ----
+  test-and-publish:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
+          plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
+          prompt: >
+            Run the seo-tester agent's full pre-publish gate against this
+            branch's changes. If seo-config.yml sets site.netlify_site_name,
+            the host has already built this PR — poll
+            https://deploy-preview-${{ github.event.pull_request.number }}--<netlify_site_name>.netlify.app
+            until it returns 200 (up to ~5 minutes) and audit that rendered
+            preview rather than the source files, per Phase 1 step 0 of the
+            agent. Write reports/TEST-REPORT.md with VERDICT:
+            PASS or VERDICT: FAIL as its first line, and state which surface
+            you actually tested (deploy preview URL, or local build output,
+            or source only). If seo-config.yml's
+            autonomy.mode is "gated" (the default) and the verdict is PASS,
+            run the seo-publisher agent to merge and publish. If the
+            verdict is FAIL, comment the report on this pull request and do
+            not merge. If autonomy.mode is "ungated", run seo-publisher
+            regardless of the verdict but still write the report first. If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
+          claude_args: |
+            --allowedTools "Bash,Read,Write,Glob,Grep,Task,mcp__github_inline_comment__create_inline_comment"
+            --comment
+
+  # ---- Daily: ping IndexNow / Search Console for anything newly live, check for regressions. ----
+  distribute:
+    if: github.event.schedule == '0 7 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
+          plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
+          prompt: >
+            Read reports/PUBLISH-LOG.md for anything published since the
+            last distribute run. For each new/changed URL, confirm IndexNow
+            and (if Google credentials are configured) Search Console
+            indexing requests already ran; if not, run them now. Run the
+            seo-tester agent's Phase 2 post-publish verification for those
+            URLs. Append a dated entry to reports/DISTRIBUTION-LOG.md
+            summarizing what was submitted and any anomalies found. Commit
+            directly to the default branch. If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
+          claude_args: |
+            --allowedTools "Bash,Read,Write,Glob,Grep,Task"

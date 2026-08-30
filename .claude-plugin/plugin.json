@@ -4,11 +4,11 @@
   "description": "Unified SEO/GEO/AEO plugin for Claude Code, merged from four MIT-licensed source projects (see /NOTICE.md for full provenance). Base audit engine and 24 core sub-skills from AgriciDaniel/claude-seo (technical SEO, schema, local, ecommerce, hreflang, backlinks, drift monitoring, Google APIs, PDF/Excel reporting). Adds: an opt-in dry-run/git-aware fixer (seo-fix) with AI-crawler robots.txt presets and a confidence-tiered finding schema ported from Hainrixz/claude-seo-ai; an actively-corrected, dated GEO/AEO statistics and platform-citation reference, plus entity/knowledge-graph, social-preview, and voice-search guides, ported from 199-biotechnologies/claude-skill-seo-geo-optimizer; content-strategy, competitor-profiling, and programmatic-SEO business-context layers merged from coreyhaines31/marketingskills into existing skills; and a new App Store Optimization skill (seo-aso), also from coreyhaines31/marketingskills, covering the App Store/Google Play ranking surface. Every audit skill remains strictly read-only; only seo-fix, after explicit user confirmation, can write.",
   "author": {
     "name": "Jishnu",
-    "url": ""
+    "url": "https://github.com/jishhnnuu"
   },
   "license": "MIT",
-  "homepage": "",
-  "repository": "",
+  "homepage": "https://github.com/jishhnnuu/seo-aeo-geo",
+  "repository": "https://github.com/jishhnnuu/seo-aeo-geo",
   "keywords": [
     "seo-fix",
     "confidence-tiered-findings",

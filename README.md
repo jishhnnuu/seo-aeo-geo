@@ -65,15 +65,15 @@ Run a full audit and watch parallel agents fan out across the site:
 
 ## Installation
 
-> **Replace `<owner>/claude-seo-unified` below with your actual repo path once you push this to GitHub.** Every command in this section, and a few further down (uninstall, extensions), uses that placeholder — do a find-and-replace across the repo after creating it.
+> Installed from [jishhnnuu/seo-aeo-geo](https://github.com/jishhnnuu/seo-aeo-geo). The plugin name is `claude-seo-unified`; the marketplace name is `jishnu-seo-aeo-geo`.
 
 ### Plugin Install (Claude Code 1.0.33+)
 
 The fastest path. One-time marketplace add, then plugin install:
 
 ```bash
-/plugin marketplace add <owner>/claude-seo-unified
-/plugin install claude-seo-unified@<owner>-claude-seo-unified
+/plugin marketplace add jishhnnuu/seo-aeo-geo
+/plugin install claude-seo-unified@jishnu-seo-aeo-geo
 /seo setup
 ```
 
@@ -84,15 +84,15 @@ with `/seo doctor`. No global Python packages or PATH shims are created.
 ### Manual Install (Unix / macOS / Linux)
 
 ```bash
-git clone --depth 1 https://github.com/<owner>/claude-seo-unified.git
-bash claude-seo-unified/install.sh
+git clone --depth 1 https://github.com/jishhnnuu/seo-aeo-geo.git
+bash seo-aeo-geo/install.sh
 ```
 
 <details>
 <summary>One-liner (curl, review then run)</summary>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<owner>/claude-seo-unified/main/install.sh > install.sh
+curl -fsSL https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/main/install.sh > install.sh
 cat install.sh        # review before running
 bash install.sh
 rm install.sh
@@ -103,11 +103,11 @@ rm install.sh
 ### Windows (PowerShell)
 
 ```powershell
-git clone --depth 1 https://github.com/<owner>/claude-seo-unified.git
-powershell -ExecutionPolicy Bypass -File claude-seo-unified\install.ps1
+git clone --depth 1 https://github.com/jishhnnuu/seo-aeo-geo.git
+powershell -ExecutionPolicy Bypass -File seo-aeo-geo\install.ps1
 ```
 
-> **Why `git clone` instead of `irm | iex`?** Claude Code's own security guardrails flag `irm ... | iex` as a supply chain risk: downloading and executing remote code without verification. The `git clone` approach lets you inspect `claude-seo\install.ps1` before running it.
+> **Why `git clone` instead of `irm | iex`?** Claude Code's own security guardrails flag `irm ... | iex` as a supply chain risk: downloading and executing remote code without verification. The `git clone` approach lets you inspect `seo-aeo-geo\install.ps1` before running it.
 
 ## Quick Start
 
@@ -351,15 +351,15 @@ Two real boundaries worth being upfront about.
 ## Uninstall
 
 ```bash
-git clone --depth 1 https://github.com/<owner>/claude-seo-unified.git
-bash claude-seo-unified/uninstall.sh
+git clone --depth 1 https://github.com/jishhnnuu/seo-aeo-geo.git
+bash seo-aeo-geo/uninstall.sh
 ```
 
 <details>
 <summary>One-liner (curl)</summary>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<owner>/claude-seo-unified/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/main/uninstall.sh | bash
 ```
 
 </details>
@@ -440,6 +440,7 @@ Claude SEO is part of a family of Claude Code skills that interoperate cleanly:
 - [Architecture](docs/ARCHITECTURE.md): 3-layer design, auto-discovery, parallel dispatch
 - [Migration v1 → v2](docs/MIGRATION-v1-to-v2.md): breaking changes, six phases of work
 - [MCP Integration](docs/MCP-INTEGRATION.md): integration notes; extension setup lives under `extensions/<name>/docs/`
+- [Growth Loop](docs/GROWTH-LOOP.md): the autonomous plan -> audit -> fix -> test -> publish -> distribute loop, and how to install it on any website
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Contributors](CONTRIBUTORS.md): community credits
 
