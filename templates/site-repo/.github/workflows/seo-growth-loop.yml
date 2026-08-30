@@ -194,7 +194,27 @@ jobs:
             scoped to this repository with Contents, Pull requests and
             Issues set to read/write, and save it as the GROWTH_LOOP_PAT
             repository secret. Continue the rest of this run regardless.
-            Then read seo-config.yml at the repo root. Run the seo-planner agent
+            Then read seo-config.yml at the repo root.
+
+            Before the planner runs, and only if reports/PUBLISH-LOG.md shows
+            this loop has published at least one page, run two review agents
+            via the Task tool so the planner sequences against evidence rather
+            than assumption:
+            (a) seo-content-performance, which pulls per-page Search Console
+            data for every published page, classifies each by age band and
+            failure mode, and writes reports/CONTENT-SCORECARD.md plus
+            reports/WRITING-LESSONS.md. The lessons file is what seo-writer
+            reads before drafting, so this is the step that makes the content
+            actually improve cycle over cycle rather than just continuing.
+            (b) seo-internal-links, which builds the whole-site link graph with
+            `claude-seo run link_graph.py` and writes reports/LINK-GRAPH.md
+            with orphans first. Run this every cycle once the site passes about
+            20 pages, and monthly below that; a small site's graph does not
+            change enough weekly to be worth the minutes.
+            Both append their proposed work to the roadmap for the planner to
+            sequence. Neither edits any page.
+
+            Then run the seo-planner agent
             to refresh reports/ROADMAP.md, reports/CONTENT-CALENDAR.md,
             reports/KPI-TRACKER.md, and reports/HUMAN-INBOX.md, using the
             most recent audit if one exists. Then run a full /seo audit

@@ -5,13 +5,13 @@
     "name": "Jishnu"
   },
   "metadata": {
-    "description": "Autonomous multi-agent website optimiser for Claude Code. 28 sub-skills and 25 sub-agents, plus 9 optional MCP extensions (DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse, Screaming Frog). v1.0.0 adds the autonomous growth loop: plan -> audit -> fix -> test -> publish -> distribute, running unattended on a schedule from any website's own repo."
+    "description": "Autonomous multi-agent website optimiser for Claude Code. 28 sub-skills and 27 sub-agents, plus 9 optional MCP extensions (DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse, Screaming Frog). v1.0.0 adds the autonomous growth loop: plan -> audit -> fix -> test -> publish -> distribute, running unattended on a schedule from any website's own repo."
   },
   "plugins": [
     {
       "name": "claude-seo-unified",
       "source": "./",
-      "description": "Autonomous multi-agent website optimiser for Claude Code. 28 sub-skills and 25 sub-agents, plus 9 optional MCP extensions (DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse, Screaming Frog). v1.0.0 adds the autonomous growth loop: plan -> audit -> fix -> test -> publish -> distribute, running unattended on a schedule from any website's own repo.",
+      "description": "Autonomous multi-agent website optimiser for Claude Code. 28 sub-skills and 27 sub-agents, plus 9 optional MCP extensions (DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse, Screaming Frog). v1.0.0 adds the autonomous growth loop: plan -> audit -> fix -> test -> publish -> distribute, running unattended on a schedule from any website's own repo.",
       "author": {
         "name": "Jishnu",
         "url": "https://github.com/jishhnnuu"

@@ -6,8 +6,9 @@ This repository contains **Claude SEO**, a Tier 4 Claude Code skill for comprehe
 SEO analysis across all industries. It follows the Agent Skills open standard and the
 3-layer architecture (directive, orchestration, execution). 28 sub-skills (23 core +
 1 orchestrator + 1 growth-loop onboarding + 1 framework integration + 2 extension
-mirrors), 25 sub-agents (15 core + 1 framework integration + 2 extension mirrors +
-1 confirmed-fix writer + 1 content writer + 5 growth-loop agents), and an extensible reference
+mirrors), 27 sub-agents (15 core + 1 framework integration + 2 extension mirrors +
+2 site-wide review agents + 1 confirmed-fix writer + 1 content writer +
+5 growth-loop agents), and an extensible reference
 system cover technical SEO, content quality,
 schema markup, image optimization, sitemap architecture, AI search optimization,
 local SEO (GBP, citations, reviews, map pack), maps intelligence, semantic topic
@@ -85,6 +86,8 @@ claude-seo/
     seo-drift.md                 # SEO drift monitoring
     seo-ecommerce.md             # E-commerce SEO analysis
     seo-flow.md                  # FLOW framework integration
+    seo-content-performance.md   # Per-page results -> lessons the writer reads
+    seo-internal-links.md        # Whole-site link graph: orphans, depth, anchors
     seo-writer.md                # Content writer: SERP-researched drafts, verified claims
     seo-planner.md               # Growth Loop: strategist / roadmap owner
     seo-resolver.md              # Growth Loop: seven-rung unblocker, decision authority
@@ -142,6 +145,7 @@ claude-seo/
     unlighthouse_run.py          # Unlighthouse CLI wrapper (site-wide Lighthouse)
     validate_backlink_report.py  # Backlink report validation
     preflight_check.py           # Proves growth-loop credentials with real API calls (gate)
+    link_graph.py                # Site-wide internal link graph analysis
     portability_check.py         # Cross-platform portability lint for SKILL.md files
     consistency_check.py         # Reference-graph gate: dead refs, routing, lock, orphans
     release_sign.py              # SHA-256 manifest generator for release signing

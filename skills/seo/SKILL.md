@@ -6,7 +6,7 @@ argument-hint: "[command] [url]"
 license: MIT
 metadata:
   author: jishhnnuu
-  version: "1.3.0"
+  version: "1.4.0"
   category: seo
 ---
 
@@ -21,8 +21,9 @@ launcher path. Never invoke bundled scripts with a bare Python interpreter.
 
 Comprehensive SEO analysis across all industries (SaaS, local services,
 e-commerce, publishers, agencies). Orchestrates 27 sub-skills (23 core + 1 growth-loop onboarding + 1 framework
-integration + 2 extension mirrors), 18 audit sub-agents, 1 confirmed-fix
-writer, 1 content writer, and 5 growth-loop agents. A separate optional Firecrawl
+integration + 2 extension mirrors), 18 audit sub-agents, 2 site-wide
+review agents, 1 confirmed-fix writer, 1 content writer, and 5 growth-loop
+agents. A separate optional Firecrawl
 extension is also installable (see "Optional Extensions" below).
 
 ## Quick Reference
@@ -320,6 +321,13 @@ For parallel analysis during audits (read-only):
 Never spawned by an audit; used only by the `seo-fix` skill after the user
 confirms the diffs:
 - `seo-fixer-writer` -- Applies AUTO-class fixes. Backs up first, idempotent, git-aware, re-verifies each change
+
+### Site-wide review agents
+
+Look across the whole site rather than one page, so they see what no
+per-page pass can. Run from the growth loop's Monday job:
+- `seo-content-performance` -- Per-page Search Console results for everything published, classified by age band and failure mode. Writes the lessons file `seo-writer` reads before drafting, which is what closes the quality loop
+- `seo-internal-links` -- Whole-site link graph: orphans, depth, dead ends, anchor dilution, broken cluster structure. Proposes specific link insertions
 
 ### Content writer
 

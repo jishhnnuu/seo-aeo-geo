@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-08-30
+
+### Added
+
+- **`seo-content-performance`** closes the loop between what was published and
+  what it earned. Pulls per-page Search Console data for every shipped page,
+  refuses to judge anything under four weeks old, and sorts the rest into five
+  states that each need a different fix: not indexed (a technical problem, not
+  a content one), indexed with no impressions (wrong target query, rewriting
+  the prose will not help), impressions with no clicks (a title and meta
+  problem, the cheapest win available), clicks with poor position (needs links
+  and time, not edits), and working. It then writes
+  `reports/WRITING-LESSONS.md`, which `seo-writer` now reads before drafting.
+  That file is the actual loop: evidence from this domain outranks general
+  principle, lessons need two pages to be a hint and four to be a pattern, and
+  stale ones are pruned rather than accumulated.
+- **`seo-internal-links`** and **`scripts/link_graph.py`** own the whole-site
+  link graph, which no per-page brief can see. The script reports orphans,
+  depth from the homepage, dead ends, ambiguous anchor text and in-degree
+  outliers; the agent works them orphans-first and proposes specific link
+  insertions, capped at fifteen a cycle so a commit stays reviewable. It
+  refuses to propose a link a reader would not find useful in context.
+- `seo-writer` gained the ranking and site-build knowledge it was missing:
+  reading intent from the live SERP rather than from the query wording,
+  matching the format the SERP rewards, writing for extraction as well as
+  reading, treating titles as adverts rather than summaries, and finding the
+  source file that produces a URL rather than editing generated output.
+
 ## [1.3.0] - 2026-08-30
 
 ### Added
