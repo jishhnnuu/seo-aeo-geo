@@ -274,13 +274,18 @@ jobs:
             /seo fix with the diffs pre-approved by the fact that they are
             listed as AUTO-tier in the roadmap (seo-fixer-writer still
             re-verifies each one after applying it). For each content item
-            on the roadmap, use the matching content brief to draft the
-            page or post as a file in this repo. Before committing any draft,
-            run `claude-seo run content_humanize.py` over it and commit the
-            cleaned version. HARD RULE: no em dashes or en dashes as sentence
-            punctuation anywhere in published copy, titles, headings or meta
-            descriptions. Use commas, colons or full stops, or rewrite the
-            sentence. Numeric ranges are the only exception. Run the seo-outreach agent
+            on the roadmap, invoke the seo-writer agent via the Task tool with
+            the matching content brief. Do not draft content yourself: the
+            writer researches the live SERP first, builds on concrete
+            specifics, verifies its own claims and runs the humanizer, and
+            none of that happens if the drafting is inlined here. Pass it the
+            brief, the target query, and the site's own pages for voice. It
+            marks anything it cannot source as [NEEDS FACT: ...]; queue those
+            to reports/HUMAN-INBOX.md rather than inventing a value or
+            dropping the sentence. HARD RULE, verified by seo-tester before
+            publish: no em dashes or en dashes as sentence punctuation
+            anywhere in copy, titles, headings or meta descriptions. Numeric
+            ranges are the only exception. Run the seo-outreach agent
             against any off-page/citation items on the roadmap — it follows
             its own non-blocking rules and writes reports/OUTREACH-LOG.md
             and queues anything needing a human action to

@@ -7,7 +7,7 @@ license: MIT
 compatibility: "Free: Common Crawl + verify always available. Optional: Moz API, Bing Webmaster (free signup). Premium: DataForSEO extension."
 metadata:
   author: jishhnnuu
-  version: "1.2.0"
+  version: "1.3.0"
   category: seo
 ---
 

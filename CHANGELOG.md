@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-08-30
+
+### Added
+
+- **`seo-writer` agent.** Content drafting was previously one clause in the
+  build job prompt: generic drafting with no research step, no editorial
+  standard, no fact-checking and no house voice. There is now a dedicated
+  writer that reads the live SERP before drafting and must state what every
+  ranking result covers, what none of them covers, and which format wins;
+  samples the site's own pages for voice; builds on concrete specifics; marks
+  anything it cannot source as [NEEDS FACT] rather than inventing it; and runs
+  content_verify, content_quality, geo_content_score and content_humanize
+  before handing off. It writes drafts on a branch only and can never publish.
+  The build job now routes drafting through it rather than inlining the work.
+
 ## [1.2.0] - 2026-08-30
 
 ### Added

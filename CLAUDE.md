@@ -6,8 +6,8 @@ This repository contains **Claude SEO**, a Tier 4 Claude Code skill for comprehe
 SEO analysis across all industries. It follows the Agent Skills open standard and the
 3-layer architecture (directive, orchestration, execution). 28 sub-skills (23 core +
 1 orchestrator + 1 growth-loop onboarding + 1 framework integration + 2 extension
-mirrors), 24 sub-agents (15 core + 1 framework integration + 2 extension mirrors +
-1 confirmed-fix writer + 5 growth-loop agents), and an extensible reference
+mirrors), 25 sub-agents (15 core + 1 framework integration + 2 extension mirrors +
+1 confirmed-fix writer + 1 content writer + 5 growth-loop agents), and an extensible reference
 system cover technical SEO, content quality,
 schema markup, image optimization, sitemap architecture, AI search optimization,
 local SEO (GBP, citations, reviews, map pack), maps intelligence, semantic topic
@@ -85,6 +85,7 @@ claude-seo/
     seo-drift.md                 # SEO drift monitoring
     seo-ecommerce.md             # E-commerce SEO analysis
     seo-flow.md                  # FLOW framework integration
+    seo-writer.md                # Content writer: SERP-researched drafts, verified claims
     seo-planner.md               # Growth Loop: strategist / roadmap owner
     seo-resolver.md              # Growth Loop: seven-rung unblocker, decision authority
     seo-outreach.md              # Growth Loop: citations, digital PR, queued drafts
