@@ -12,9 +12,9 @@ argument-hint: "<url or keyword>"
 license: MIT
 compatibility: "Enhanced with DataForSEO Merchant API (optional)"
 metadata:
-  author: AgriciDaniel
+  author: jishhnnuu
   original_author: "Matej Marjanovic (Pro Hub Challenge)"
-  version: "2.2.4"
+  version: "1.0.0"
   category: seo
 ---
 

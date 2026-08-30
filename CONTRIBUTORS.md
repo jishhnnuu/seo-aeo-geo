@@ -1,10 +1,12 @@
 # Contributors
 
-Claude SEO is created and maintained by [@AgriciDaniel](https://github.com/AgriciDaniel).
+This repository is maintained by [@jishhnnuu](https://github.com/jishhnnuu).
 
-This project thrives thanks to community contributions from the
-[AI Marketing Hub](https://www.skool.com/ai-marketing-hub) Pro Hub Challenge
-and open-source pull requests.
+It merges and adapts four MIT-licensed upstream projects (see
+[NOTICE.md](NOTICE.md)), and therefore carries forward the work of everyone
+credited below. Issue and pull-request numbers link to the upstream repository
+where that contribution was originally made — they are the record of who did
+the work, not of activity in this repo.
 
 ## Pro Hub Challenge (v1.9.0)
 

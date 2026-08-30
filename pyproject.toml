@@ -1,18 +1,18 @@
 [project]
 name = "claude-seo-unified"
-version = "0.1.0"
-description = "Comprehensive SEO analysis skill for Claude Code"
+version = "1.0.0"
+description = "Autonomous multi-agent website optimiser for Claude Code"
 requires-python = ">=3.10"
 license = "MIT"
 readme = "README.md"
 authors = [
-  {name = "Daniel Agrici"}
+  {name = "Jishnu"}
 ]
 keywords = ["seo", "claude-code", "ai-tools", "schema-markup", "e-e-a-t", "geo"]
 
 [project.urls]
-Homepage = "https://github.com/AgriciDaniel/claude-seo"
-Repository = "https://github.com/AgriciDaniel/claude-seo"
+Homepage = "https://github.com/jishhnnuu/seo-aeo-geo"
+Repository = "https://github.com/jishhnnuu/seo-aeo-geo"
 
 [tool.ruff]
 target-version = "py310"

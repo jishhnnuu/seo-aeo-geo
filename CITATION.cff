@@ -1,22 +1,22 @@
 cff-version: 1.2.0
-title: Claude SEO
+title: SEO/AEO/GEO
 message: >-
   If you use this software, please cite it using the metadata from this file.
 type: software
 authors:
-  - alias: AgriciDaniel
-    given-names: Daniel
-    family-names: Agrici
-    website: 'https://agricidaniel.com'
-repository-code: 'https://github.com/AgriciDaniel/claude-seo'
-url: 'https://github.com/AgriciDaniel/claude-seo'
+  - alias: jishhnnuu
+    given-names: Jishnu
+repository-code: 'https://github.com/jishhnnuu/seo-aeo-geo'
+url: 'https://github.com/jishhnnuu/seo-aeo-geo'
 license: MIT
-version: 2.2.4
-date-released: '2026-07-20'
+version: 1.0.0
+date-released: '2026-08-30'
 keywords:
   - seo
+  - aeo
+  - geo
   - claude-code
   - ai-tools
+  - multi-agent
   - schema-markup
   - e-e-a-t
-  - geo

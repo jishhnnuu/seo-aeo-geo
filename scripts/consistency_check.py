@@ -213,7 +213,10 @@ def check_routing(files):
 def check_agent_refs(files, texts):
     agents = {os.path.basename(f)[:-3] for f in files
               if f.startswith("agents/") and f.endswith(".md")}
-    pat = re.compile(r'agents/([a-z0-9-]+)\.md')
+    # Lookbehind so a dotted config path in a *target site's* repo (the dot-agents or
+    # dot-claude directory that some skills tell users to look for) is not mistaken for
+    # a reference to this repo's own agents directory.
+    pat = re.compile(r'(?<![\w.])agents/([a-z0-9-]+)\.md')
     errors = []
     for f in texts:
         if f.startswith("agents/"):

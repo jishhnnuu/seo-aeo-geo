@@ -12,8 +12,8 @@ user-invocable: true
 argument-hint: "[url]"
 license: MIT
 metadata:
-  author: AgriciDaniel
-  version: "2.2.4"
+  author: jishhnnuu
+  version: "1.0.0"
   category: seo
 ---
 
@@ -63,7 +63,7 @@ scoring goal in a peer-reviewed paper and a large-sample empirical study
 rather than industry-blog estimates, and gives concrete run_script-able
 numbers (claim density, sentence length, the "grounding budget" framework)
 that carry a materially higher evidence bar than most of the numbers
-elsewhere in this file. Run `scripts/geo_content_score.py` for a
+elsewhere in this file. Run `claude-seo run geo_content_score.py` for a
 deterministic, zero-API-key implementation of that methodology instead of
 scoring citability by eye.
 
@@ -350,7 +350,7 @@ Generate `GEO-ANALYSIS.md` with:
    robots.txt alone is not sufficient evidence; see the edge-WAF check above)
 4. **llms.txt Status** (present, missing, recommendations)
 5. **Brand Mention Analysis** (presence on Wikipedia, Reddit, YouTube, LinkedIn)
-6. **Passage-Level Citability** — run `python3 scripts/geo_content_score.py
+6. **Passage-Level Citability** — run `claude-seo run geo_content_score.py
    --file <extracted-page-text> --json` for the deterministic claim-density/
    sentence-length/frontloading numbers (see
    `references/peer-reviewed-geo-research.md`) instead of eyeballing which

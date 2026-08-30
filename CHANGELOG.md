@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-08-30
+
+First release of `seo-aeo-geo` as its own project.
+
+### Added
+
+- **Autonomous Growth Loop** (`docs/GROWTH-LOOP.md`) — five new agents that take
+  a site from audit to live change without stalling: `seo-planner` (roadmap,
+  quick wins first), `seo-outreach` (citations and digital PR, drafts and queues
+  only), `seo-tester` (pre- and post-publish gate, no write access),
+  `seo-publisher` (the only agent that can merge or deploy, and only on a fresh
+  passing verdict), and `seo-resolver` (a mandatory seven-rung solution ladder
+  every other agent must exhaust before it may fail, skip, or escalate).
+- **`seo-onboard` skill** and `templates/site-repo/` — puts any website under the
+  loop from a session on that website's own repo, installing a scheduled
+  GitHub Actions workflow, config, and report folder.
+
+### Changed
+
+- Completed the rebrand from the upstream projects this repository merges:
+  marketplace name, plugin identity, code owners, citation metadata, package
+  metadata, installer targets, and support-channel URLs now all refer to this
+  repository. Attribution required by the MIT and CC BY 4.0 licences is retained
+  in `NOTICE.md`, the `LICENSE-*` files, the per-skill `LICENSE.txt` notices, and
+  the FLOW prompt headers.
+- The marketplace entry named the plugin `claude-seo` while every documented
+  install command said `claude-seo-unified`, so `/plugin install` could not
+  resolve. The entry now matches.
+- Version reset to 1.0.0. This repository has no prior tagged releases; the
+  entries below record the upstream history it inherits.
+- Removed the community-promotion footer that was appended to every audit report.
+
+### Fixed
+
+- `seo-fixer-writer` re-verified fixes by invoking `scripts/validate_schema.py`,
+  which does not exist; it now calls `schema_ecommerce_validate.py` through the
+  managed runtime.
+- Two bare `python3 scripts/geo_content_score.py` invocations in `seo-geo` now go
+  through `claude-seo run`, as every other bundled script does.
+- `consistency_check.py` no longer reports a dotted config path in a target
+  site's repo as a dead reference to this repo's agents directory.
+- Documented `/seo screaming-frog` in `docs/COMMANDS.md`, and linked two
+  reference guides that no skill pointed at.
+
+---
+
+## Upstream history
+
+Entries below this line are the release history of the upstream projects this
+repository merges, retained as a record. They describe releases made in those
+repositories, not in this one. See `NOTICE.md` for provenance.
+
 ## [2.2.4] - 2026-07-20
 
 Community maintenance release following a full review of every open issue and pull request.

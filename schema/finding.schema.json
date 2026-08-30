@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/AgriciDaniel/claude-seo/schema/finding.schema.json",
+  "$id": "https://github.com/jishhnnuu/seo-aeo-geo/schema/finding.schema.json",
   "title": "claude-seo-ai Finding",
   "description": "A single audit finding. Falsifiability-first: every finding must be independently observable (evidence) and re-checkable (verification.reproduce). Impact is banded and confidence-tagged, never a fabricated percentage. This is the machine-checkable formalization of the four recommendation fields required by skills/seo/references/thinking-framework.md (first-principle observation -> evidence/expected, dependency relationship -> handled at the report-assembly level, falsifiability check -> verification, leading indicator -> expected_impact.rationale). Adapted from Hainrixz/claude-seo-ai (MIT); see /NOTICE.md.",
   "type": "object",

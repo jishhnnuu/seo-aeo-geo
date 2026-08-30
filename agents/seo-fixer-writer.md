@@ -35,8 +35,8 @@ For each assigned finding in the confirmed batch:
    `dateModified` already exists, for example), make no change and report
    `pass`. Re-running must never duplicate or corrupt content.
 5. **Re-verify.** Re-run the finding's `verification.reproduce` command
-   (e.g. `python3 scripts/validate_schema.py --url <u>`, mirroring the
-   pattern this plugin's other audit scripts already use) and record the
+   (e.g. `claude-seo run schema_ecommerce_validate.py --url <u>`, mirroring
+   the pattern this plugin's other audit scripts already use) and record the
    assertion's pass/fail in the returned finding.
 
 ## Invocation

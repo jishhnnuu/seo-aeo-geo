@@ -8,8 +8,8 @@ user-invocable: true
 argument-hint: "[url]"
 license: MIT
 metadata:
-  author: AgriciDaniel
-  version: "2.2.4"
+  author: jishhnnuu
+  version: "1.0.0"
   category: seo
 ---
 
@@ -76,6 +76,14 @@ When generating schema for a page:
 3. Generate valid JSON-LD with all required + recommended properties
 4. Include only truthful, verifiable data. Use placeholders clearly marked for user to fill
 5. Validate output before presenting
+
+## Entity and Knowledge Graph
+
+`sameAs`, `@id` linking, and Organization/Person entity consolidation decide
+whether search engines and AI answer engines resolve the site to a single known
+entity rather than several unlinked ones. Read
+`references/entity-knowledge-graph-guide.md` before generating Organization,
+Person, or `sameAs` markup.
 
 ## Common Schema Templates
 

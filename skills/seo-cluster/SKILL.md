@@ -12,9 +12,9 @@ user-invocable: true
 argument-hint: "<seed-keyword or url>"
 license: MIT
 metadata:
-  author: AgriciDaniel
+  author: jishhnnuu
   original_author: "Lutfiya Miller (Pro Hub Challenge Winner)"
-  version: "2.2.4"
+  version: "1.0.0"
   category: seo
 ---
 
@@ -230,8 +230,9 @@ Test: Does ~/.claude/skills/blog/SKILL.md exist?
    - Key points to cover
    - Competing pages to differentiate from
 3. Write briefs to `cluster-briefs/` directory as individual markdown files
-4. Inform user: "Install [claude-blog](https://github.com/AgriciDaniel/claude-blog)
-   to auto-create content. Briefs saved to `cluster-briefs/`."
+4. Inform user: "Briefs saved to `cluster-briefs/`. Hand them to
+   `seo-planner` to sequence into `reports/CONTENT-CALENDAR.md`, or to
+   `/seo content-brief` to expand any single one."
 
 ---
 

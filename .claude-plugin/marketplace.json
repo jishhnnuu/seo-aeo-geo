@@ -5,13 +5,13 @@
     "name": "Jishnu"
   },
   "metadata": {
-    "description": "Comprehensive SEO analysis plugin for Claude Code. 25 sub-skills and 18 sub-agents, plus 8 optional MCP extensions (DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse). v2.2.4 adds a managed cross-platform runtime and safe sitemap discovery, and repairs GSC pagination, Bing endpoints, extension paths, Windows portability, SPA rendering, and JSON-LD extraction."
+    "description": "Autonomous multi-agent website optimiser for Claude Code. 28 sub-skills and 24 sub-agents, plus 9 optional MCP extensions (DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse, Screaming Frog). v1.0.0 adds the autonomous growth loop: plan -> audit -> fix -> test -> publish -> distribute, running unattended on a schedule from any website's own repo."
   },
   "plugins": [
     {
       "name": "claude-seo-unified",
       "source": "./",
-      "description": "Comprehensive SEO analysis plugin for Claude Code. 25 sub-skills and 18 sub-agents, plus 8 optional MCP extensions. v2.2.4 adds a managed cross-platform runtime and safe sitemap discovery, and repairs GSC pagination, Bing endpoints, extension paths, Windows portability, SPA rendering, JSON-LD extraction, and DataForSEO permissions.",
+      "description": "Autonomous multi-agent website optimiser for Claude Code. 28 sub-skills and 24 sub-agents, plus 9 optional MCP extensions (DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse, Screaming Frog). v1.0.0 adds the autonomous growth loop: plan -> audit -> fix -> test -> publish -> distribute, running unattended on a schedule from any website's own repo.",
       "author": {
         "name": "Jishnu",
         "url": "https://github.com/jishhnnuu"

@@ -10,8 +10,8 @@ user-invocable: true
 argument-hint: "[business-type]"
 license: MIT
 metadata:
-  author: AgriciDaniel
-  version: "2.2.4"
+  author: jishhnnuu
+  version: "1.0.0"
   category: seo
 ---
 

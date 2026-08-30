@@ -1,4 +1,4 @@
-# Claude SEO: Multi-Platform Agent Instructions
+# seo-aeo-geo: Multi-Platform Agent Instructions
 
 > For **Cursor**, **Cursor Cloud Agents**, **Google Antigravity**, **Gemini CLI**,
 > **Grok Build**,
@@ -7,7 +7,13 @@
 >
 > Claude Code users: see `CLAUDE.md` instead.
 
-## Cross-platform portability (v2.0.0)
+An autonomous multi-agent website optimiser: 28 sub-skills and 24 sub-agents
+covering technical SEO, content and E-E-A-T, schema, Core Web Vitals, local,
+e-commerce, hreflang, backlinks, drift, ASO and GEO/AEO, plus the five Growth
+Loop agents (see `docs/GROWTH-LOOP.md`). Audit skills are read-only; only
+`seo-fix` and `seo-publisher` write, and both are gated.
+
+## Cross-platform portability
 
 Every skill in `skills/*/SKILL.md` is authored to a portable subset of the
 Claude Code skill spec. Validate compatibility with your harness via:
@@ -179,6 +185,9 @@ extensions/                # 8 MCP extensions: DataForSEO, Firecrawl, Banana, Ah
 
 ## Credits
 
-Created by [@AgriciDaniel](https://github.com/AgriciDaniel).
-v1.9.0 community contributions by Lutfiya Miller, Chris Muller, Florian Schmitz,
-Dan Colta, and Matej Marjanovic. See [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Maintained by [@jishhnnuu](https://github.com/jishhnnuu).
+
+This project merges and adapts four MIT-licensed upstream projects, and carries
+community contributions from Lutfiya Miller, Chris Muller, Florian Schmitz, Dan
+Colta, and Matej Marjanovic. Full attribution is in [NOTICE.md](NOTICE.md) and
+[CONTRIBUTORS.md](CONTRIBUTORS.md).

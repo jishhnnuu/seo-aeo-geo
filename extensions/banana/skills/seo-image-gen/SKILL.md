@@ -6,8 +6,8 @@ user-invocable: true
 license: MIT
 compatibility: "Requires nanobanana MCP server"
 metadata:
-  author: AgriciDaniel
-  version: "2.2.4"
+  author: jishhnnuu
+  version: "1.0.0"
   category: seo
 ---
 

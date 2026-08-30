@@ -11,8 +11,8 @@ user-invocable: true
 argument-hint: "[url]"
 license: MIT
 metadata:
-  author: AgriciDaniel
-  version: "2.2.4"
+  author: jishhnnuu
+  version: "1.0.0"
   category: seo
 ---
 
@@ -194,6 +194,13 @@ Sorted by file size impact (largest savings first):
 5. Compress X oversized images
 
 ---
+
+## Social Previews
+
+Open Graph and Twitter Card images are the image surface that renders when a
+page is shared, and they follow different sizing, aspect-ratio, and text-safe
+rules from on-page images. Read
+`references/social-preview-optimization.md` before auditing or generating them.
 
 ## Image SERP Analysis
 

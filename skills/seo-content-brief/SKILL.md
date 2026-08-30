@@ -268,7 +268,7 @@ don't add up to a coherent content program:
 - **Check for `.agents/product-marketing.md`** (or `.claude/product-marketing.md`)
   before asking the user to restate business context that may already be
   documented elsewhere in their project.
-- Read `references/site-profile.md`-equivalent context this plugin already
-  gathers during `/seo plan` before treating a brief as a one-off — a
+- Reuse the site-profile context this plugin already gathers during
+  `/seo plan` before treating a brief as a one-off — a
   content brief is more useful when it's visibly part of a pillar/cluster
   roadmap than when it's produced in isolation.

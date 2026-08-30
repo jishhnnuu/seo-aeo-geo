@@ -11,9 +11,9 @@ user-invocable: true
 argument-hint: "<url> [keyword]"
 license: MIT
 metadata:
-  author: AgriciDaniel
+  author: jishhnnuu
   original_author: "Florian Schmitz (Pro Hub Challenge)"
-  version: "2.2.4"
+  version: "1.0.0"
   category: seo
 ---
 

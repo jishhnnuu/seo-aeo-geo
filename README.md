@@ -1,23 +1,43 @@
-![Claude SEO cover: a Claude Code command palette with /seo audit, schema, geo, content, and backlinks commands over a dark CRT panel](assets/cover.svg)
+![SEO/AEO/GEO cover: a Claude Code command palette with /seo audit, schema, geo, content, and backlinks commands over a dark CRT panel](assets/cover.svg)
 
-![claude-seo-unified cover](assets/cover.svg)
+# seo-aeo-geo: an autonomous multi-agent website optimiser for Claude Code
 
-# claude-seo-unified: Merged SEO / AEO / GEO Plugin for Claude Code
+**Takes a website from zero visibility to ranking, and keeps it there — unattended.**
+28 sub-skills and 24 sub-agents cover technical SEO, content quality and E-E-A-T,
+schema markup, Core Web Vitals, local and maps intelligence, e-commerce,
+international/hreflang, backlinks, drift monitoring, App Store Optimization, and
+GEO/AEO for AI Overviews, ChatGPT and Perplexity.
 
-**An open-source SEO, AEO, and GEO analysis plugin for [Claude Code](https://claude.ai/claude-code), merged from four MIT-licensed source projects into one non-overlapping toolkit.** See [NOTICE.md](./NOTICE.md) for full provenance. In short:
-
-- **Base audit engine + 24 core skills** from [AgriciDaniel/claude-seo](https://github.com/AgriciDaniel/claude-seo) — technical SEO, schema, local, e-commerce, hreflang, backlinks, drift monitoring, Google APIs, PDF/Excel reporting.
-- **Opt-in fixer + confidence-tiered finding schema** ported from [Hainrixz/claude-seo-ai](https://github.com/Hainrixz/claude-seo-ai) — the only part of this plugin that writes to files, and only after explicit confirmation.
-- **Actively-corrected, dated GEO/AEO research** ported from [199-biotechnologies/claude-skill-seo-geo-optimizer](https://github.com/199-biotechnologies/claude-skill-seo-geo-optimizer) — a statistics file that documents what it retracted, not just what it added.
-- **Content-strategy, competitor-research, and programmatic-SEO business-context layers** merged from [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) into the existing equivalent skills, so there's one skill per capability rather than duplicates.
-
-Every audit skill remains strictly read-only; only `/seo fix`, after explicit user confirmation, can modify files.
+On top of the audit engine sits the **[Growth Loop](docs/GROWTH-LOOP.md)**: five
+agents — `seo-planner`, `seo-outreach`, `seo-tester`, `seo-publisher` and
+`seo-resolver` — that plan, audit, fix, write, test, publish and re-submit a site
+on a schedule from that site's own repo, with a seven-rung resolution ladder so
+no agent ever stalls waiting on a human answer.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **This is a derivative work**, not the original `AgriciDaniel/claude-seo`. If you want that project standalone, with its own releases, CI, and community, go to [AgriciDaniel/claude-seo](https://github.com/AgriciDaniel/claude-seo) directly. This repo strips out branding/community links specific to that project's maintainer and focuses purely on the merged technical capability — see NOTICE.md before assuming any claim, badge, or stat below is this fork's own.
+### Safety model
 
-### Why this merge
+Every audit skill is strictly read-only. Exactly two components can write, and
+both are gated: `/seo fix`, only after you confirm each diff, and `seo-publisher`,
+only on a fresh passing verdict from `seo-tester`.
+
+### Provenance
+
+This is a derivative work that merges and adapts four MIT-licensed projects into
+one non-overlapping toolkit. Full attribution, including which files came from
+where, is in **[NOTICE.md](./NOTICE.md)** — required reading before you assume any
+claim or statistic below originated here.
+
+- **Base audit engine + 24 core skills** from [AgriciDaniel/claude-seo](https://github.com/AgriciDaniel/claude-seo) — technical SEO, schema, local, e-commerce, hreflang, backlinks, drift monitoring, Google APIs, PDF/Excel reporting.
+- **Opt-in fixer + confidence-tiered finding schema** from [Hainrixz/claude-seo-ai](https://github.com/Hainrixz/claude-seo-ai) — the only part of the audit path that writes to files, and only after explicit confirmation.
+- **Actively-corrected, dated GEO/AEO research** from [199-biotechnologies/claude-skill-seo-geo-optimizer](https://github.com/199-biotechnologies/claude-skill-seo-geo-optimizer) — a statistics file that documents what it retracted, not just what it added.
+- **Content-strategy, competitor-research, and programmatic-SEO layers** from [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) — merged into the equivalent existing skills, so there is one skill per capability rather than duplicates.
+
+The Growth Loop, its five agents, and the onboarding skill are original to this
+repository.
+
+### Why this exists
 
 - **AI-search first.** Aligned with [Google's AI Optimization Guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide), with confidence-tiered GEO/AEO claims (established / directional / speculative) rather than presenting every industry stat as settled fact.
 - **Parallel execution.** Full site audits spawn multiple specialist agents simultaneously.
@@ -35,8 +55,6 @@ Every audit skill remains strictly read-only; only `/seo fix`, after explicit us
 Run a full audit and watch parallel agents fan out across the site:
 
 ![Claude SEO /seo audit demo: parallel subagents producing a prioritized action plan](screenshots/seo-audit-demo.gif)
-
-[Watch the full demo on YouTube](https://www.youtube.com/watch?v=COMnNlUakQk)
 
 ## Table of Contents
 
@@ -421,7 +439,6 @@ Claude SEO is part of a family of Claude Code skills that interoperate cleanly:
 | Skill | What it does | How it connects |
 |-------|-------------|-----------------|
 | This plugin | SEO/AEO/GEO analysis, audits, schema, fixer | Core. Analyzes sites, generates action plans, can apply safe fixes. |
-| [Claude Blog](https://github.com/AgriciDaniel/claude-blog) | Blog writing, optimization, scoring | Optional companion (AgriciDaniel). Writes content optimized by SEO findings. |
 | [Claude Banana](https://github.com/AgriciDaniel/banana-claude) | AI image generation via Gemini | Optional, used by the `seo-image-gen` extension. |
 | [FLOW](https://github.com/AgriciDaniel/flow) | Evidence-led SEO framework (41 AI prompts, CC BY 4.0) | Optional. Powers `seo-flow` prompts if installed. |
 

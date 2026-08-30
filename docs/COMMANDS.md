@@ -712,6 +712,22 @@ roster, and what it will and will not do automatically.
 
 ---
 
+### `/seo screaming-frog <url>`
+
+Enterprise-scale crawling — tens of thousands to millions of URLs, bulk CSV
+export, redirect-chain mapping — via a Screaming Frog SEO Spider licence you
+already own (extension). **Prerequisites:** a licensed Screaming Frog SEO Spider
+CLI on PATH (`./extensions/screaming-frog/install.sh`).
+
+```
+/seo screaming-frog https://example.com
+```
+
+Use this over the built-in audit crawl when the site exceeds the ~500-page cap
+`seo-audit`'s parallel-subagent crawl works within.
+
+---
+
 ## Quick Reference
 
 | Command | Use Case |
@@ -748,3 +764,4 @@ roster, and what it will and will not do automatically.
 | `/seo profound [command]` | LLM citation tracking with time-series data (extension) |
 | `/seo bing [command] <url>` | Bing Webmaster Tools + IndexNow URL submission (extension) |
 | `/seo unlighthouse <url>` | Multi-page Lighthouse runner, runs locally (extension) |
+| `/seo screaming-frog <url>` | Enterprise-scale crawling via a licensed Screaming Frog SEO Spider CLI (extension) |

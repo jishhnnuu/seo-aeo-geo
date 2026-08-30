@@ -239,7 +239,6 @@ claude-seo/
 
 Part of the Claude Code skill family:
 - [Claude Banana](https://github.com/AgriciDaniel/banana-claude) -- standalone image gen (bundled as extension here)
-- [Claude Blog](https://github.com/AgriciDaniel/claude-blog) -- companion blog engine, consumes SEO findings
 - [AI Marketing Claude](https://github.com/zubair-trabzada/ai-marketing-claude) -- community marketing suite (copy, emails, ads, funnels, CRO)
 - [Growth Loop](docs/GROWTH-LOOP.md) -- autonomous plan/audit/fix/test/publish/distribute loop for any website, built on top of this plugin
 
@@ -264,12 +263,18 @@ git remote -v                        # expects: origin only
 git ls-remote --heads origin main
 ```
 
-## Release Blog Post
+## Releases
 
-After cutting a new release (git tag + `gh release create`), run:
-
-```
-/release-blog
-```
-
-This generates a blog post on https://claude-seo.md/blog/, handles cover image generation, SEO metadata, FAQ schema, internal linking, sitemap/llms.txt updates, Vercel deployment, and Google indexing.
+1. Merge the feature branch into `main`.
+2. Bump `version` in `.claude-plugin/plugin.json`, `pyproject.toml` and
+   `CITATION.cff`, and the default tag pin in `install.sh` / `install.ps1`
+   (a CI guard in `tests/test_manifest_consistency.py` enforces that these
+   four agree).
+3. Tag `main` and push the tag **before** pushing `main`, so a user running
+   the `curl | bash` installer never pulls a tag that does not yet point at
+   released code:
+   ```bash
+   git tag -a vX.Y.Z -m "vX.Y.Z"
+   git push origin vX.Y.Z && git push origin main
+   ```
+4. Cut the GitHub release from that tag.
