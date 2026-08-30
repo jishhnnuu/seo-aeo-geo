@@ -126,15 +126,38 @@ without the engine repo needing to keep a list.
 
 ## Step 5 — Commit and open the first run
 
-Commit everything to a branch, open a PR, and merge it once CI is green —
-these are config and workflow files, not site content, so they don't need
-the loop's own test gate. Then trigger the loop manually from the Actions
-tab (`workflow_dispatch`) rather than waiting for Monday, so the first
-audit lands now.
+Commit everything to a branch, open a PR, and merge it once CI is green.
+These are config and workflow files, not site content, so they do not need
+the loop's own test gate.
 
-Watch the run. If it fails, read the log and fix the cause — a wrong
-marketplace name, a malformed `seo-config.yml`, or a missing checkout are
-the usual suspects — then re-run.
+Then run the first cycle now rather than waiting for Monday. The workflow
+takes a `job` input, so run the three jobs **in order**, letting each finish
+before starting the next. They write to the same branch, so firing them
+together makes them race:
+
+| Order | Job | What it does | Roughly |
+|---|---|---|---|
+| 1 | `plan-and-audit` | Full audit, writes the roadmap | 10 to 30 min |
+| 2 | `build` | Applies fixes, drafts content, opens a PR | 15 to 40 min |
+| 3 | (automatic) | `test-and-publish` fires from that PR | 10 to 20 min |
+| 4 | `report` | Writes and delivers the weekly report | 5 to 10 min |
+
+From the Actions tab: pick **SEO Growth Loop**, click **Run workflow**,
+choose the job. Or from a terminal:
+
+```bash
+gh workflow run seo-growth-loop.yml -f job=plan-and-audit
+```
+
+Step 3 is the one to watch. `test-and-publish` fires by itself when the
+build job opens its pull request, and that only happens if `GROWTH_LOOP_PAT`
+is set correctly. If the PR appears and nothing tests it, that secret is
+missing or wrong, and the loop will stall silently every cycle until it is
+fixed. Confirm that specific transition before calling the setup done.
+
+If a run fails, read the log and fix the cause. A wrong marketplace name, a
+malformed `seo-config.yml`, or a missing checkout are the usual suspects.
+Then re-run.
 
 ## Step 6 — Report back
 

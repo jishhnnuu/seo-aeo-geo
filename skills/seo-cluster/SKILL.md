@@ -14,7 +14,7 @@ license: MIT
 metadata:
   author: jishhnnuu
   original_author: "Lutfiya Miller (Pro Hub Challenge Winner)"
-  version: "1.4.0"
+  version: "1.4.1"
   category: seo
 ---
 

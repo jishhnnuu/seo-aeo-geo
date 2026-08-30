@@ -5,7 +5,7 @@ user-invocable: true
 argument-hint: "<live site url>"
 license: MIT
 metadata:
-  version: "1.4.0"
+  version: "1.4.1"
   category: seo
 ---
 
@@ -223,12 +223,31 @@ central list has to exist anywhere.
 
 ## Step 5 — Ship it and run once
 
-Commit to a branch, open a PR, merge once CI is green — these are config
+Commit to a branch, open a PR, merge once CI is green. These are config
 and workflow files, not site content, so the loop's own test gate does not
-apply to them. Then trigger the workflow manually from the Actions tab
-(`workflow_dispatch`) so the first audit runs now rather than on Monday.
+apply to them.
 
-Watch that run. If it fails, do not report the failure and stop — invoke
+Then run the first cycle now rather than waiting for Monday. The workflow
+takes a `job` input, so trigger the three jobs **in order**, waiting for each
+to finish before starting the next. They write to the same branch, and firing
+them together makes them race:
+
+```bash
+gh workflow run seo-growth-loop.yml -f job=plan-and-audit   # roadmap + full audit
+# wait for it to complete, then:
+gh workflow run seo-growth-loop.yml -f job=build            # fixes + content, opens a PR
+# the PR triggers test-and-publish on its own. Once it has merged:
+gh workflow run seo-growth-loop.yml -f job=report           # the weekly report
+```
+
+Expect the audit to take roughly 10 to 30 minutes depending on site size.
+The `build` job opens a pull request; `test-and-publish` fires from that pull
+request automatically, which is the step that proves `GROWTH_LOOP_PAT` is
+working. If the PR opens and nothing then tests it, that secret is missing or
+wrong, and the whole loop will stall silently every cycle until it is fixed.
+Check that specifically before declaring the setup done.
+
+Watch every run. If it fails, do not report the failure and stop — invoke
 `seo-resolver` with the literal error from the log and let it work the
 problem. Wrong marketplace name, malformed `seo-config.yml`, a missing
 checkout and an unauthenticated plugin fetch are the usual suspects, and

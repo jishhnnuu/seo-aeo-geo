@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-08-30
+
+### Fixed
+
+- Onboarding told the operator to trigger `workflow_dispatch` and stop there.
+  That instruction predated the `job` input added in 1.1.1, so it neither named
+  which job to run nor gave the first-run order. Both the skill and the human
+  walkthrough now spell out the sequence (`plan-and-audit`, then `build`, then
+  the automatic `test-and-publish`, then `report`), with the reason they must
+  run in order: they write to the same branch and racing them corrupts it. Both
+  also now call out the one transition worth watching, since a pull request that
+  opens and is never tested is the visible symptom of a missing
+  `GROWTH_LOOP_PAT`, and the failure is otherwise silent.
+
 ## [1.4.0] - 2026-08-30
 
 ### Added

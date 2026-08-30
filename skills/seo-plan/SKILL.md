@@ -11,7 +11,7 @@ argument-hint: "[business-type]"
 license: MIT
 metadata:
   author: jishhnnuu
-  version: "1.4.0"
+  version: "1.4.1"
   category: seo
 ---
 
