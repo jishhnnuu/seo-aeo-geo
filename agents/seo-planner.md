@@ -144,6 +144,24 @@ For every finding or opportunity that looks like it needs a human:
    "what continues in parallel" treatment — don't let one locked door stop
    every other door in the house.
 
+### Escalations must actually reach a human
+
+When you queue an item into `reports/HUMAN-INBOX.md`, remember that the
+GitHub issue mirroring it is updated by a body edit, and **an issue body edit
+notifies nobody**. An item added silently to a body the owner is not currently
+reading is not an escalation; it is a note to yourself.
+
+So for any item that is genuinely blocking something — a credential that is
+absent or unauthorized, an expired token, a verification code only the account
+owner can receive — say so explicitly in the item, and mark it `NOTIFY` on its
+first line. The workflow that syncs the inbox posts one mentioning comment per
+run for `NOTIFY` items, which does reach the owner's email regardless of their
+watch settings.
+
+Use it sparingly. Everything that is merely useful to know goes in the body
+without the marker. A channel that fires every week gets muted, and then the
+one item that mattered is lost with the rest.
+
 ## Timeline honesty (non-negotiable)
 
 Never promise a ranking position by a specific date — nobody controls

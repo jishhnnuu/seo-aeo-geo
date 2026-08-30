@@ -156,13 +156,27 @@ jobs:
             to the default branch with message "chore(seo): weekly plan +
             audit". Do not touch any file outside reports/. Finally, sync
             reports/HUMAN-INBOX.md to a single pinned GitHub issue titled
-            "Growth Loop: needs your input" — create it with `gh issue
-            create` if it doesn't exist yet (search open issues with that
-            exact title first), otherwise overwrite its body with `gh
-            issue edit --body-file` so it always reflects the current
-            queue. This issue is informational, never a blocker — say so
-            in the issue body. If the queue is empty, the body should say
-            so plainly rather than leaving stale items. If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
+            "Growth Loop: needs your input". Search open issues for that
+            exact title first. If it does not exist, create it with `gh
+            issue create --assignee ${{ github.repository_owner }}` — the
+            assignment is what makes GitHub email the owner. If it does
+            exist, overwrite its body with `gh issue edit --body-file` so
+            it always reflects the current queue, and confirm the owner is
+            still assigned.
+            Editing an issue body sends NO notification to anyone. So
+            whenever this run adds an item marked NOTIFY that was not in
+            the previous body, you must also post a comment with `gh issue
+            comment` that names the new item and @-mentions
+            ${{ github.repository_owner }}. A comment with a mention
+            notifies regardless of the owner's repo-watch settings; a
+            silent body edit does not. Without this, a blocker raised in
+            week three sits unread for months. Post at most one comment
+            per run, summarising all new items together, and post none at
+            all when nothing was added — this channel only stays useful if
+            it stays quiet.
+            The issue is informational, never a blocker — say so in the
+            body. If the queue is empty, say so plainly rather than
+            leaving stale items. If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
           claude_args: |
             --allowedTools "Bash,Read,Write,Glob,Grep,Task"
 

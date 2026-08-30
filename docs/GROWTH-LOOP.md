@@ -237,6 +237,23 @@ workflow, the runners are GitHub's, and the agents commit, open, test, merge
 and submit on their own. Scheduled cron on GitHub can fire late under load —
 minutes to occasionally an hour — which does not matter for a weekly cadence.
 
+### How you find out when something breaks
+
+Three channels, none of which need you to go looking:
+
+- **A job fails** — GitHub emails the repo owner when a *scheduled* workflow
+  fails. This covers the big ones: an expired `CLAUDE_CODE_OAUTH_TOKEN`, an
+  expired `GROWTH_LOOP_PAT`, a revoked service account, exhausted Actions
+  minutes.
+- **Something needs you** — items marked `NOTIFY` in
+  `reports/HUMAN-INBOX.md` trigger one mentioning comment on the pinned issue.
+  This matters because **editing an issue body notifies nobody**: without the
+  comment, a blocker raised in week three would sit unread indefinitely. The
+  issue is also assigned to the repo owner on creation, which notifies too.
+- **Nothing at all for weeks** — that is itself the signal. A healthy loop
+  commits to `reports/` every Monday. If the last commit there is a month old,
+  the schedule stopped: check Actions, then billing.
+
 Two things still want a human roughly monthly: the pinned
 `Growth Loop: needs your input` issue, and the billing page.
 
