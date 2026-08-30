@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-08-30
+
+### Added
+
+- **Preflight gate** (`scripts/preflight_check.py`) — every scheduled run now
+  proves its credentials with real API calls before any other job starts.
+  Reports WORKING / UNAUTHORIZED / ABSENT as distinct states, because a
+  credential that exists and is refused is a permission grant away from working
+  and should not read as "not configured". Only a missing `GROWTH_LOOP_PAT` is
+  fatal; everything else degrades the run and states what the gap costs.
+- **Release workflow** (`.github/workflows/release.yml`) — cuts the tag and
+  GitHub Release from the committed version, guarded by five-way version
+  agreement and both quality gates.
+
+### Changed
+
+- **Every agent must now escalate rather than skip.** The resolver doctrine
+  previously existed only in the five growth-loop agents; the nineteen audit
+  agents had no instruction to escalate and would report "could not verify" and
+  move on. All agent files, including extension mirrors, now carry a mandatory
+  "When you are blocked" contract.
+- **seo-planner is now accountable for outcomes, not activity.** Added a
+  cumulative outcome review that forces a strategy change when metrics do not
+  move: reach problems at four cycles, relevance problems at four cycles, a
+  written diagnosis at six, and any regression outranking all planned work.
+
 ## [1.0.0] - 2026-08-30
 
 First release of `seo-aeo-geo` as its own project.

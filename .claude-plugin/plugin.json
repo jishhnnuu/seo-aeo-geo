@@ -1,6 +1,6 @@
 {
   "name": "claude-seo-unified",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Autonomous multi-agent website optimiser for Claude Code: 28 sub-skills (24 core + 1 orchestrator + 1 framework integration + 2 extension mirrors) and 24 sub-agents spanning technical SEO, content and E-E-A-T, schema, Core Web Vitals, local and maps, e-commerce, hreflang, backlinks, drift, ASO and GEO/AEO. Adds a growth loop that plans, audits, fixes, tests, publishes and re-submits a site on a schedule. Audits are read-only; only seo-fix and seo-publisher write. See /NOTICE.md.",
   "author": {
     "name": "Jishnu",
