@@ -69,9 +69,16 @@ jobs:
       - name: Quality gates
         run: |
           set -euo pipefail
-          python3 -m pip install --quiet pyyaml
+          python3 -m pip install --quiet pyyaml pytest
           python3 scripts/consistency_check.py
           python3 scripts/portability_check.py
+          # The hand-rolled version comparison above covers five files. The
+          # manifest suite covers every one of them PLUS each skill's
+          # metadata.version and both extension mirrors — a v1.1.0 shipped
+          # with 37 skills still declaring 1.0.0 because this step did not
+          # exist. Do not replace this with a narrower check.
+          python3 -m pytest tests/test_manifest_consistency.py \
+                            tests/test_parasite_risk_and_extensions.py -q
 
       - name: Create tag and GitHub Release
         if: ${{ !inputs.dry_run }}

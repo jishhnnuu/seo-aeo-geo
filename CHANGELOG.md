@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-08-30
+
+### Added
+
+- **Weekly report** — a fifth scheduled job (Monday 09:00 UTC) writes
+  `reports/WEEKLY-REPORT.md`, leading with traffic rather than activity, and
+  delivers it as a comment on a pinned issue (which GitHub emails) plus an
+  optional real email when SMTP secrets are set.
+
+### Fixed
+
+- v1.1.0 shipped with 37 skills still declaring `metadata.version: 1.0.0`.
+  The release workflow's hand-rolled version check covered five files and
+  missed skill metadata entirely; it now runs the manifest test suite, which
+  covers every version surface including both extension mirrors.
+
 ## [1.1.0] - 2026-08-30
 
 ### Added

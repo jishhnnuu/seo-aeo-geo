@@ -15,7 +15,7 @@ argument-hint: "<app store url>"
 license: MIT
 metadata:
   category: seo
-  version: "1.0.0"
+  version: "1.1.1"
   provenance: "Ported from coreyhaines31/marketingskills (MIT). See /NOTICE.md."
 ---
 

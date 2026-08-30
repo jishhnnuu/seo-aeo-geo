@@ -5,7 +5,7 @@ user-invocable: true
 argument-hint: "<live site url>"
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.1"
   category: seo
 ---
 
@@ -160,6 +160,8 @@ Set each with `gh secret set`:
 | `INDEXNOW_KEY` | generate a fresh 32-character hex key |
 | `CLAUDE_CODE_OAUTH_TOKEN` | already present if `/install-github-app` ran; if missing, say so and tell them to run it |
 | `GROWTH_LOOP_PAT` | **required** — see below. Never generate this yourself; a token cannot be minted by an agent |
+| `REPORT_EMAIL_TO` | optional — where to email the weekly report. Ask the user once; if they decline, the report still reaches them as a GitHub issue comment |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | optional, only with `REPORT_EMAIL_TO`. For Gmail this must be an App Password, not the account password. Never ask the user to paste it into chat — tell them to set it with `gh secret set SMTP_PASSWORD` so it is never in a transcript |
 
 ### `GROWTH_LOOP_PAT` — the one secret the loop cannot run without
 

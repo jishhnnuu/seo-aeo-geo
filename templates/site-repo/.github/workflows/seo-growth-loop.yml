@@ -67,6 +67,7 @@ on:
     - cron: "0 6 * * 1"        # plan + full audit: Monday 06:00 UTC
     - cron: "0 6 * * 2,4"      # fix + content build: Tuesday & Thursday 06:00 UTC
     - cron: "0 7 * * *"        # distribution + indexing check: daily 07:00 UTC
+    - cron: "0 9 * * 1"        # weekly report: Monday 09:00 UTC, after the audit lands
   pull_request:
     branches: [seo/**]
     types: [opened, synchronize, reopened]
@@ -77,7 +78,7 @@ on:
         required: true
         default: plan-and-audit
         type: choice
-        options: [plan-and-audit, build, distribute]
+        options: [plan-and-audit, build, distribute, report]
 
 # Serialize runs that commit to the default branch, so the Monday audit and
 # the daily distribute job can never race each other into a push conflict.
@@ -115,6 +116,15 @@ env:
   WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
   SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
   WEBFLOW_API_TOKEN: ${{ secrets.WEBFLOW_API_TOKEN }}
+  # --- OPTIONAL: real email delivery of the weekly report. Without these the
+  #     report still reaches you, as a comment on a pinned GitHub issue, which
+  #     GitHub emails to you. Set them only if you want a formatted inbox copy.
+  #     For Gmail, SMTP_PASSWORD must be an App Password, never the account
+  #     password: https://myaccount.google.com/apppasswords ---
+  REPORT_EMAIL_TO: ${{ secrets.REPORT_EMAIL_TO }}
+  # `secrets` is not an available context inside a step-level `if`, but `env` is,
+  # so the presence test has to be computed here rather than at the step.
+  HAS_SMTP: ${{ secrets.SMTP_USERNAME != '' && secrets.REPORT_EMAIL_TO != '' }}
   # --- lets the agents use the `gh` CLI (issue sync, PR creation) ---
   # Prefer the PAT: a pull request opened with the built-in GITHUB_TOKEN does
   # not trigger the `on: pull_request` test-and-publish job. See the header.
@@ -341,3 +351,78 @@ jobs:
             directly to the default branch. If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
           claude_args: |
             --allowedTools "Bash,Read,Write,Glob,Grep,Task"
+
+  # ---- Monday, after the audit: assemble and deliver the weekly report. ----
+  report:
+    needs: preflight
+    if: github.event.schedule == '0 9 * * 1' || inputs.job == 'report'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
+          plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
+          prompt: >
+            Write reports/WEEKLY-REPORT.md — the one thing the site owner
+            actually reads. Assume they have not opened the repo all week and
+            will read this on a phone. Lead with the numbers, not the activity.
+
+            Structure it exactly so:
+            (1) THE NUMBERS — a small table of impressions, clicks, average
+            position and CTR for the last 7 days versus the 7 before, each with
+            the direction and the absolute change, from GSC via seo-google. If
+            GSC is unavailable, say that in one line at the top instead of
+            filling the table with lab data dressed up as traffic.
+            (2) VERDICT — one short paragraph answering only "is this working?"
+            Quote the outcome-review rung seo-planner recorded in
+            reports/ROADMAP.md this cycle and what it changed because of it.
+            Never report activity as progress. If it is too early to judge,
+            say exactly that and give the cycle number.
+            (3) WHAT SHIPPED — what actually reached the live site since the
+            last report, from reports/PUBLISH-LOG.md, each with the roadmap
+            item it addressed. If nothing shipped, say so plainly and say why:
+            an unmerged PR, a failing gate, or nothing was due.
+            (4) WHAT IS NEXT — the top three roadmap items for the coming week,
+            one line each.
+            (5) NEEDS YOU — anything in reports/HUMAN-INBOX.md, or the single
+            line "Nothing needs you." Never pad this section.
+
+            Keep the whole thing under 400 words. No preamble, no restating
+            what SEO is, no congratulating anyone. Commit it to the default
+            branch.
+
+            Then deliver it. Find or create an open issue titled
+            "Growth Loop: weekly report", assigned to
+            ${{ github.repository_owner }}. Post the report as a NEW COMMENT
+            on it with `gh issue comment` — a comment notifies, editing a body
+            does not, and this report is the notification. Do not edit the
+            issue body.
+
+            If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
+          claude_args: |
+            --allowedTools "Bash,Read,Write,Glob,Grep,Task"
+
+      - name: Email the report (only if SMTP secrets are set)
+        if: env.HAS_SMTP == 'true'
+        continue-on-error: true          # a mail failure must never fail the loop
+        # Pin this to a full commit SHA once you have verified one you trust;
+        # a floating major tag means a third party can change what runs here.
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER || 'smtp.gmail.com' }}
+          server_port: ${{ secrets.SMTP_PORT || '465' }}
+          secure: true
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          from: SEO Growth Loop
+          to: ${{ secrets.REPORT_EMAIL_TO }}
+          subject: "Weekly SEO report — ${{ github.repository }}"
+          html_body: file://reports/WEEKLY-REPORT.md
+          convert_markdown: true

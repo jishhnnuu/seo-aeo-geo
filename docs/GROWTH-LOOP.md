@@ -259,6 +259,33 @@ stopping it — a weaker audit beats no audit. The full table lands in the run's
 GitHub Actions summary, so a glance at the Actions tab tells you what the loop
 can currently see.
 
+### The weekly report
+
+A fifth scheduled job runs Monday 09:00 UTC, after the audit has landed, and
+writes `reports/WEEKLY-REPORT.md`: the numbers first (impressions, clicks,
+average position, CTR — this week against last), then a one-paragraph verdict
+quoting the outcome-review rung the planner recorded, then what actually
+shipped, what is next, and what needs you. Under 400 words, written to be read
+on a phone by someone who has not opened the repo all week.
+
+It is delivered two ways:
+
+- **Always** — as a *new comment* on a pinned issue titled "Growth Loop:
+  weekly report", assigned to the repo owner. GitHub emails that comment to
+  you. This needs no setup and no extra credentials. It is a comment rather
+  than a body edit for exactly the reason given above: an edit notifies nobody.
+- **Optionally** — as a real formatted email, if you set `SMTP_USERNAME`,
+  `SMTP_PASSWORD` and `REPORT_EMAIL_TO` (plus `SMTP_SERVER` / `SMTP_PORT` if
+  you are not on Gmail). For Gmail, `SMTP_PASSWORD` must be an
+  [App Password](https://myaccount.google.com/apppasswords) — never the account
+  password, which would also not work with 2FA on. The mail step is
+  `continue-on-error`, so a bounced or misconfigured mailbox degrades the
+  report to the GitHub comment rather than failing the run.
+
+The report deliberately leads with traffic rather than with work done. A cycle
+that shipped everything planned and moved no metric was a failed cycle, and
+this is where that has to be visible.
+
 ### How you find out when something breaks
 
 Three channels, none of which need you to go looking:
