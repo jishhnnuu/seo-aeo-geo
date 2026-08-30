@@ -1,0 +1,104 @@
+# Cuts a release: creates the git tag and the GitHub Release from the version
+# already committed in .claude-plugin/plugin.json.
+#
+# Why this exists as a workflow rather than something you run by hand: an agent
+# session working on this repo can push commits and trigger workflows, but
+# cannot create tags or releases directly (the API proxy in front of those
+# sessions allows neither). Running the release here means the whole flow —
+# bump the version, merge, tag, publish — can be driven end to end without a
+# laptop, using the runner's own GITHUB_TOKEN, which does have the rights.
+#
+# Trigger it from the Actions tab, or with `gh workflow run release.yml`.
+# It refuses to tag anything that does not agree with itself, so a half-done
+# version bump cannot become a published release.
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Validate only — do not create the tag or release"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Read version and check the four sources agree
+        id: v
+        run: |
+          set -euo pipefail
+          VERSION=$(python3 -c "import json;print(json.load(open('.claude-plugin/plugin.json'))['version'])")
+          PYPROJECT=$(grep -m1 '^version' pyproject.toml | sed 's/.*"\(.*\)".*/\1/')
+          CITATION=$(grep -m1 '^version:' CITATION.cff | awk '{print $2}')
+          SH_TAG=$(grep -o 'CLAUDE_SEO_TAG:-v[0-9.]*' install.sh | sed 's/.*-v//')
+          PS_TAG=$(grep -o "else { 'v[0-9.]*' }" install.ps1 | sed "s/.*'v//;s/' }//")
+
+          echo "plugin.json   $VERSION"
+          echo "pyproject     $PYPROJECT"
+          echo "CITATION.cff  $CITATION"
+          echo "install.sh    $SH_TAG"
+          echo "install.ps1   $PS_TAG"
+
+          for f in "$PYPROJECT" "$CITATION" "$SH_TAG" "$PS_TAG"; do
+            if [ "$f" != "$VERSION" ]; then
+              echo "::error::Version mismatch. All five must equal $VERSION before releasing." >&2
+              exit 1
+            fi
+          done
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify the tag does not already exist
+        run: |
+          set -euo pipefail
+          if git rev-parse "v${{ steps.v.outputs.version }}" >/dev/null 2>&1; then
+            echo "::error::Tag v${{ steps.v.outputs.version }} already exists. Bump the version first." >&2
+            exit 1
+          fi
+
+      - name: Quality gates
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyyaml
+          python3 scripts/consistency_check.py
+          python3 scripts/portability_check.py
+
+      - name: Create tag and GitHub Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${VERSION}" -m "v${VERSION}"
+          git push origin "v${VERSION}"
+
+          NOTES=$(python3 - <<'EOF'
+          import re, pathlib, os
+          v = os.environ["VERSION"]
+          text = pathlib.Path("CHANGELOG.md").read_text()
+          m = re.search(rf"^## \[{re.escape(v)}\].*?$(.*?)(?=^## |\Z)", text, re.S | re.M)
+          print((m.group(1).strip() if m else f"Release v{v}.")[:60000])
+          EOF
+          )
+          gh release create "v${VERSION}" --title "v${VERSION}" --notes "$NOTES" --verify-tag
+
+      - name: Summary
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Dry run passed. v${{ steps.v.outputs.version }} is ready to release." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Released [v${{ steps.v.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.v.outputs.version }})." >> "$GITHUB_STEP_SUMMARY"
+          fi
