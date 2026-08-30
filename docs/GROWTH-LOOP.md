@@ -148,6 +148,98 @@ the repo with the `seo-growth-loop` topic, and triggers the first audit.
 
 Nothing about a website is ever written into this engine repo.
 
+## Private site repo, public engine repo
+
+That is the right way round, and it is what the templates assume.
+
+The engine repo (this one) is **public** and holds no credentials — only
+templates with placeholder values. Each website's repo can be **private** and
+holds all the real secrets. A workflow running in a private repo clones a
+public plugin repo with no authentication at all, so nothing about the private
+side needs to be loosened. The reverse arrangement — a private engine repo —
+would need every site repo to carry a token just to install the plugin, which
+is why it is not the default.
+
+Four things change when the site repo is private, and three of them cost money
+or silence:
+
+**Actions minutes are metered.** Public repos get unlimited minutes; private
+repos get 2,000/month on Free and 3,000 on Pro. This loop runs roughly ten
+agent jobs a week. Every job in the template sets `timeout-minutes: 45` so a
+single hung run cannot eat a fifth of the month, and a `concurrency` group
+stops two runs overlapping — but watch **Settings → Billing** for the first
+few weeks and adjust the cron frequency if you are burning through it. When
+the quota runs out, workflows simply stop; GitHub does not warn you loudly.
+
+**There are no organization secrets on a personal account.** GitHub has
+repository and environment secrets, and organization secrets — but no
+account-level ones. If your repos live under your own username, set the shared
+credentials on each site repo. If they live in an organization, organization
+secrets work, though on *private* repos that needs a Team plan (on public
+repos it works on Free).
+
+**Scheduled workflows are disabled after 60 days of repo inactivity.** The
+loop commits to `reports/` every week, which counts as activity, so it keeps
+itself alive as long as it is actually running. A loop that has been failing
+silently for two months will also stop being scheduled.
+
+**Private repos cannot use GitHub Pages on the Free plan.** If that is how the
+site is served, the repo has to be public or the plan upgraded.
+
+## The PAT, and why the loop stalls without it
+
+This is the single most likely reason a correctly-installed loop does nothing.
+
+GitHub will not start a workflow run from an event created with the built-in
+`GITHUB_TOKEN`. It is a deliberate anti-recursion rule. The `build` job opens
+a pull request; `test-and-publish` runs `on: pull_request`. If that PR is
+opened with `GITHUB_TOKEN`, **the test job never runs** — the pull request sits
+open forever, nothing tests it, `seo-publisher` never gets its passing verdict,
+and nothing reaches the site. The Actions tab shows green runs the whole time,
+because the jobs that did run succeeded.
+
+The fix is a fine-grained personal access token, scoped to the site repo, with
+**Contents, Pull requests and Issues set to read/write**, saved as the
+`GROWTH_LOOP_PAT` secret. Create it at
+<https://github.com/settings/personal-access-tokens/new>. The workflow falls
+back to `GITHUB_TOKEN` when it is absent, so audits and reports keep working —
+and the Monday job puts a missing PAT at the top of
+`reports/HUMAN-INBOX.md` rather than letting it go unnoticed.
+
+Set an expiry you will actually renew. When the token expires the loop returns
+to exactly the stall above, so treat the renewal date as a real calendar item.
+
+## Merging is not deploying
+
+`seo-publisher` merges to your deploy branch. Whether that reaches the live
+site depends on how the site is hosted:
+
+- **Vercel, Netlify, Cloudflare Pages, Render, Amplify** — these deploy from
+  their own webhooks, which fire on any push regardless of which token made
+  it. These work with no extra setup.
+- **GitHub Pages, or any deploy that is itself a GitHub Actions workflow** —
+  subject to the same restriction as above. A merge made with `GITHUB_TOKEN`
+  will not trigger your deploy workflow. With `GROWTH_LOOP_PAT` configured it
+  will, because the merge is then attributed to that token.
+- **A CMS (WordPress, Shopify, Webflow)** — nothing is deployed from git at
+  all; `seo-publisher` calls the platform's API directly using the per-site
+  CMS credentials.
+
+Set `site.deploy_branch` and `site.platform` in `seo-config.yml` so the
+publisher knows which of these it is doing, and verify the first cycle by hand
+before trusting it unattended.
+
+## What "unattended" actually means here
+
+Once `CLAUDE_CODE_OAUTH_TOKEN` and `GROWTH_LOOP_PAT` are set, nothing needs
+your laptop, your session, or your attention. GitHub's schedulers fire the
+workflow, the runners are GitHub's, and the agents commit, open, test, merge
+and submit on their own. Scheduled cron on GitHub can fire late under load —
+minutes to occasionally an hour — which does not matter for a weekly cadence.
+
+Two things still want a human roughly monthly: the pinned
+`Growth Loop: needs your input` issue, and the billing page.
+
 ## What this cannot do for you
 
 - It cannot buy domain trust or backlinks — those take months regardless

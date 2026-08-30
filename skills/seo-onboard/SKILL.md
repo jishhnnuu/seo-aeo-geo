@@ -159,6 +159,44 @@ Set each with `gh secret set`:
 | `GA4_PROPERTY_ID` | this site's GA4 property, if configured |
 | `INDEXNOW_KEY` | generate a fresh 32-character hex key |
 | `CLAUDE_CODE_OAUTH_TOKEN` | already present if `/install-github-app` ran; if missing, say so and tell them to run it |
+| `GROWTH_LOOP_PAT` | **required** — see below. Never generate this yourself; a token cannot be minted by an agent |
+
+### `GROWTH_LOOP_PAT` — the one secret the loop cannot run without
+
+GitHub does not start a workflow run from an event created with the built-in
+`GITHUB_TOKEN`. The `build` job opens a pull request and `test-and-publish`
+runs `on: pull_request`, so without a real token that PR is never tested and
+never merged — the loop stalls every cycle while still looking healthy in the
+Actions tab.
+
+You cannot mint this token. Check whether it already exists
+(`gh secret list`); if it does not, put it at the top of
+`reports/HUMAN-INBOX.md` and tell the user directly, in one short paragraph:
+create a fine-grained personal access token limited to this one repository,
+with **Contents: read/write, Pull requests: read/write, Issues: read/write**,
+then `gh secret set GROWTH_LOOP_PAT`. Give them the exact link
+(`https://github.com/settings/personal-access-tokens/new`) and the exact
+permission names. This is a rung-7 human atom under the resolver's ladder: it
+is a physical action only the account owner can take, and everything around it
+is already prepared.
+
+Everything else on this page degrades gracefully. This one does not.
+
+### Where the shared secrets live
+
+The workflow's comments describe organization secrets for the credentials that
+are identical across every site. Check what the account actually is before
+repeating that advice — `gh api user --jq .type` returns `User` or
+`Organization`:
+
+- **Personal account** — there is no account-level Actions secret on GitHub.
+  Set every secret on each site repo. That is a handful of `gh secret set`
+  calls per site, which you are doing anyway; just do not tell the user they
+  can set them "once".
+- **Organization** — organization secrets work, and every site repo inherits
+  them. On *private* repos this additionally requires a Team plan; on public
+  repos it works on Free. If the org is on Free with private repos, fall back
+  to per-repo secrets.
 
 If a credential is not where you expect it, hand the problem to
 `seo-resolver` before giving up on it — it will look in other locations,

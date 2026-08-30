@@ -89,11 +89,25 @@ Then set them on this repo with `gh secret set`:
 | `GA4_PROPERTY_ID` | this site's GA4 property, if the owner has one configured |
 | `INDEXNOW_KEY` | generate a fresh 32-character hex key for this site |
 | `CLAUDE_CODE_OAUTH_TOKEN` | already set if `/install-github-app` ran here; if missing, say so |
+| `GROWTH_LOOP_PAT` | **required** — a fine-grained PAT scoped to this repo, Contents + Pull requests + Issues at read/write. Only the account owner can create it |
 
-Anything you genuinely cannot find, skip and list at the end — every one of
-these is optional, and the loop degrades to weaker data rather than
-failing. Never invent a value, and never print a secret's value back into
-the chat.
+Anything else you genuinely cannot find, skip and list at the end — the rest
+are optional and the loop degrades to weaker data rather than failing. Never
+invent a value, and never print a secret's value back into the chat.
+
+`GROWTH_LOOP_PAT` is the exception: it is not optional. GitHub does not start
+a workflow run from an event created with the built-in `GITHUB_TOKEN`, so a
+pull request opened by the build job would never trigger the test-and-publish
+job — the PR would sit open, nothing would merge, and the loop would stall
+every cycle while the Actions tab still showed green. If the secret is absent,
+say so plainly, link
+<https://github.com/settings/personal-access-tokens/new>, and name the three
+permissions exactly.
+
+Note on shared secrets: GitHub has no account-level Actions secret. If these
+repos live under a personal username, set every secret on each site repo —
+do not tell the owner they only need to do it once. Organization secrets do
+work for organizations (on private repos that needs a Team plan).
 
 Then commit the IndexNow key file: a file named `<key>.txt` at the site
 root (or in the public/static directory the framework serves from)

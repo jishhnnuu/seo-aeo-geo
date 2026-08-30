@@ -7,18 +7,58 @@
 #
 # BEFORE FIRST RUN:
 #   1. Fill in seo-config.yml at the repo root.
-#   2. Set the secrets listed under "env:" below. The SHARED ones
-#      (CLAUDE_CODE_OAUTH_TOKEN, GOOGLE_API_KEY,
-#      GOOGLE_APPLICATION_CREDENTIALS_JSON, MOZ_API_KEY,
-#      BING_WEBMASTER_API_KEY) are identical across every site you run this
-#      on — set them ONCE as GitHub *organization* secrets and every site
-#      repo inherits them. Only the PER-SITE ones (GSC_PROPERTY,
-#      GA4_PROPERTY_ID, INDEXNOW_KEY, and any CMS token) go on this repo.
-#      Every one of them is optional: the loop degrades to lab-only data
+#   2. Set the secrets listed under "env:" below. Every one is optional
+#      except the two marked REQUIRED: the loop degrades to weaker data
 #      rather than failing when a credential is absent.
+#
+#      REQUIRED:
+#        CLAUDE_CODE_OAUTH_TOKEN  - from `/install-github-app` in Claude Code.
+#        GROWTH_LOOP_PAT          - see "Why a PAT is required" below.
+#
+#      On a GitHub *organization*, the shared ones (CLAUDE_CODE_OAUTH_TOKEN,
+#      GROWTH_LOOP_PAT, GOOGLE_API_KEY, GOOGLE_APPLICATION_CREDENTIALS_JSON,
+#      MOZ_API_KEY, BING_WEBMASTER_API_KEY) can be organization secrets that
+#      every site repo inherits. On a *personal* account there is no such
+#      thing as an account-level Actions secret, so set them per repo.
+#      (Organization secrets on PRIVATE repos additionally need a Team plan;
+#      on public repos they work on Free.)
 #   3. Turn on branch protection on your deploy branch requiring the
 #      "test-and-publish" status check to pass before merge
 #      (belt-and-suspenders alongside seo-publisher's own precondition).
+#
+# ---------------------------------------------------------------------------
+# WHY A PAT IS REQUIRED (do not skip this)
+#
+# GitHub deliberately does not start a workflow run from an event created
+# with the built-in GITHUB_TOKEN -- it is how they prevent workflows from
+# triggering themselves forever. The "build" job below opens a pull request,
+# and "test-and-publish" runs `on: pull_request`. If the PR is opened with
+# GITHUB_TOKEN, that second job NEVER RUNS: the PR sits open, nothing tests
+# it, nothing merges it, and the loop silently stalls every cycle while
+# appearing to work.
+#
+# So: create a fine-grained personal access token scoped to THIS repository
+# with Contents: read/write, Pull requests: read/write, Issues: read/write,
+# and save it as the GROWTH_LOOP_PAT secret. The jobs below fall back to
+# GITHUB_TOKEN if it is absent, which keeps the audit jobs working but
+# leaves publishing stalled -- the plan-and-audit job reports this.
+#
+# DEPLOYMENT: merging is not the same as deploying. Vercel, Netlify,
+# Cloudflare Pages and similar hosts deploy from their own webhooks, which
+# fire normally on any push. But if THIS repo deploys via another GitHub
+# Actions workflow (GitHub Pages, a custom deploy.yml), that workflow is
+# subject to the same restriction above -- it needs the PAT too, or it will
+# not fire on the merge.
+#
+# COST: Actions minutes are unlimited on public repos but metered on private
+# ones (2,000/month on Free, 3,000 on Pro). This loop runs roughly ten agent
+# jobs a week. Every job below sets timeout-minutes so one hung run cannot
+# eat the month; watch Settings -> Billing for the first few weeks.
+#
+# KEEPING THE SCHEDULE ALIVE: GitHub disables scheduled workflows in a repo
+# with no activity for 60 days. This loop commits to reports/ weekly, which
+# counts as activity, so it sustains itself as long as it is running.
+# ---------------------------------------------------------------------------
 
 name: SEO Growth Loop
 
@@ -30,7 +70,23 @@ on:
   pull_request:
     branches: [seo/**]
     types: [opened, synchronize, reopened]
-  workflow_dispatch: {}        # lets you trigger any job manually from the Actions tab
+  workflow_dispatch:           # lets you trigger one job manually from the Actions tab
+    inputs:
+      job:
+        description: "Which job to run"
+        required: true
+        default: plan-and-audit
+        type: choice
+        options: [plan-and-audit, build, distribute]
+
+# Serialize runs that commit to the default branch, so the Monday audit and
+# the daily distribute job can never race each other into a push conflict.
+# PR runs get their own group so testing is never blocked by an audit.
+concurrency:
+  group: >-
+    seo-growth-loop-${{ github.event_name == 'pull_request'
+      && format('pr-{0}', github.event.pull_request.number) || 'default-branch' }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -60,24 +116,39 @@ env:
   SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
   WEBFLOW_API_TOKEN: ${{ secrets.WEBFLOW_API_TOKEN }}
   # --- lets the agents use the `gh` CLI (issue sync, PR creation) ---
-  GH_TOKEN: ${{ github.token }}
+  # Prefer the PAT: a pull request opened with the built-in GITHUB_TOKEN does
+  # not trigger the `on: pull_request` test-and-publish job. See the header.
+  GH_TOKEN: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
+  HAS_GROWTH_LOOP_PAT: ${{ secrets.GROWTH_LOOP_PAT != '' }}
 
 jobs:
   # ---- Monday: strategy + full audit. Writes reports/ only, no site changes. ----
   plan-and-audit:
-    if: github.event.schedule == '0 6 * * 1' || github.event_name == 'workflow_dispatch'
+    if: github.event.schedule == '0 6 * * 1' || inputs.job == 'plan-and-audit'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
+          token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
-            Read seo-config.yml at the repo root. Run the seo-planner agent
+            First: if the environment variable HAS_GROWTH_LOOP_PAT is not
+            "true", the GROWTH_LOOP_PAT secret is missing. That means pull
+            requests opened by the build job will not trigger the
+            test-and-publish job, so nothing will ever be tested or merged
+            and the loop will stall while still appearing to run. Make this
+            the first, top item in reports/HUMAN-INBOX.md, worded as a
+            two-minute fix: create a fine-grained personal access token
+            scoped to this repository with Contents, Pull requests and
+            Issues set to read/write, and save it as the GROWTH_LOOP_PAT
+            repository secret. Continue the rest of this run regardless.
+            Then read seo-config.yml at the repo root. Run the seo-planner agent
             to refresh reports/ROADMAP.md, reports/CONTENT-CALENDAR.md,
             reports/KPI-TRACKER.md, and reports/HUMAN-INBOX.md, using the
             most recent audit if one exists. Then run a full /seo audit
@@ -97,12 +168,14 @@ jobs:
 
   # ---- Tue/Thu: fixer + content agents, opens a PR. Never pushes to main directly. ----
   build:
-    if: github.event.schedule == '0 6 * * 2,4' || github.event_name == 'workflow_dispatch'
+    if: github.event.schedule == '0 6 * * 2,4' || inputs.job == 'build'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
+          token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -157,11 +230,13 @@ jobs:
   test-and-publish:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha }}
+          token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -189,12 +264,14 @@ jobs:
 
   # ---- Daily: ping IndexNow / Search Console for anything newly live, check for regressions. ----
   distribute:
-    if: github.event.schedule == '0 7 * * *' || github.event_name == 'workflow_dispatch'
+    if: github.event.schedule == '0 7 * * *' || inputs.job == 'distribute'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
+          token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
