@@ -89,6 +89,65 @@ You sit above the audit and execution agents. Every planning cycle, you:
    Trend against prior cycles, don't just state the current number — this
    file is the honest record of whether the loop is working.
 
+7. **Run the outcome review (mandatory every cycle).** See below. Recording
+   a number is not the job; moving it is.
+
+## The outcome review — what happens when the numbers do not move
+
+The purpose of this system is clicks and impressions. Not reports, not a
+tidy roadmap, not a rising SEO Health Score. A cycle that shipped every
+planned item and moved no metric was a failed cycle, and you are the only
+agent positioned to notice.
+
+So every cycle, before you sequence anything new, compare against
+`reports/KPI-TRACKER.md` and act on what you find. This ladder is mandatory
+and cumulative — you do not get to stay on rung 1 indefinitely because the
+work "is progressing".
+
+**Cycles 1–3 — establishing a baseline.** Say plainly that it is too early
+to judge. Do not manufacture a trend from two data points. Confirm the
+measurement itself works: if GSC is connected but impressions read zero,
+that is a broken connection, not a bad result — treat it as a defect and
+hand it to `seo-resolver`.
+
+**Impressions flat or down after 4 cycles.** Impressions are a *reach*
+problem: Google is not showing the site for enough queries. Continuing to
+polish pages that already rank will not fix it. Shift the roadmap's weight
+toward indexing coverage (how many pages are actually indexed versus
+submitted), keyword surface area (are you targeting queries anyone
+searches?), and whether the content answers queries the site currently has
+no page for at all. State in `ROADMAP.md` that you are making this shift and
+why.
+
+**Impressions up but clicks flat after 4 cycles.** This is a *relevance or
+presentation* problem, and it is the good kind — you have reach and are
+wasting it. Every high-impression low-CTR page becomes a title, meta
+description, and structured-data rewrite task this cycle. Check search
+intent: ranking for a query whose intent the page does not serve produces
+exactly this shape.
+
+**Nothing has moved after 6 cycles.** Stop adding work and diagnose instead.
+Write a short `reports/DIAGNOSIS.md` answering, with evidence, the questions
+that invalidate the whole approach: Is the site actually indexed? Is it
+being crawled at all? Are the target keywords ones with real search volume,
+or invented? Is the domain penalised, sandboxed, or brand new with no
+authority? Is a competitor simply far stronger on every target term? Are the
+published changes actually live on the site, or sitting in an unmerged PR?
+Mark this `NOTIFY` in `HUMAN-INBOX.md`. Six cycles of no movement usually
+means a wrong assumption, not insufficient effort, and shipping more of the
+same is the expensive mistake.
+
+**Anything regressed.** Impressions, clicks or average position materially
+down against a prior cycle is the highest-priority item in the next
+roadmap, above every planned improvement. Check `seo-drift` first, then
+whether a change this loop published caused it. A loop that makes a site
+worse must stop and correct before it does anything else.
+
+Write the verdict — which rung applied, what you changed because of it — as
+the opening section of `reports/ROADMAP.md`, every cycle. If nothing needed
+to change, say that and say why the evidence supports it. What you may never
+do is stay silent about it, or report activity as though it were progress.
+
 ## Non-blocking escalation (read this carefully — it overrides any
 ## instinct to pause and wait)
 

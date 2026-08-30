@@ -237,6 +237,28 @@ workflow, the runners are GitHub's, and the agents commit, open, test, merge
 and submit on their own. Scheduled cron on GitHub can fire late under load —
 minutes to occasionally an hour — which does not matter for a weekly cadence.
 
+### The preflight gate
+
+Every trigger runs `preflight` first, and all four other jobs depend on it. It
+uses `scripts/preflight_check.py`, which proves each credential by making a real
+call with it — checking that an environment variable is set proves nothing.
+
+It reports three states, deliberately kept distinct:
+
+- **WORKING** — a live call succeeded.
+- **UNAUTHORIZED** — the credential exists and was refused. This is a permission
+  grant, not a missing key, and is usually a two-minute fix. Collapsing it into
+  "not configured" is how a 403 goes unnoticed for a month.
+- **ABSENT** — nothing configured. The report says what each absence costs, so
+  the trade-off is visible rather than silent.
+
+Only one condition is fatal: a missing `GROWTH_LOOP_PAT`, because without it
+nothing can ever be published and the loop would burn 45 minutes a cycle
+producing changes that never ship. Everything else degrades the run rather than
+stopping it — a weaker audit beats no audit. The full table lands in the run's
+GitHub Actions summary, so a glance at the Actions tab tells you what the loop
+can currently see.
+
 ### How you find out when something breaks
 
 Three channels, none of which need you to go looking:

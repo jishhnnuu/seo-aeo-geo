@@ -122,8 +122,44 @@ env:
   HAS_GROWTH_LOOP_PAT: ${{ secrets.GROWTH_LOOP_PAT != '' }}
 
 jobs:
+  # ---- Runs first on every trigger. Proves the setup still works before any
+  #      other job spends 45 minutes and your Actions minutes on it. ----
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      verdict: ${{ steps.check.outputs.verdict }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
+
+      - name: Prove every credential with a real call
+        id: check
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+          GSC_PROPERTY: ${{ secrets.GSC_PROPERTY }}
+          GA4_PROPERTY_ID: ${{ secrets.GA4_PROPERTY_ID }}
+          MOZ_API_KEY: ${{ secrets.MOZ_API_KEY }}
+          BING_WEBMASTER_API_KEY: ${{ secrets.BING_WEBMASTER_API_KEY }}
+          HAS_PAT: ${{ secrets.GROWTH_LOOP_PAT != '' }}
+        run: |
+          set -uo pipefail
+          python3 -m pip install --quiet pyyaml google-auth google-api-python-client 2>/dev/null || true
+          python3 scripts/preflight_check.py --github-summary >> "$GITHUB_STEP_SUMMARY"
+          echo "verdict=$?" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Fail loudly if the loop cannot do its job at all
+        run: |
+          set -euo pipefail
+          python3 scripts/preflight_check.py --gate
+
   # ---- Monday: strategy + full audit. Writes reports/ only, no site changes. ----
   plan-and-audit:
+    needs: preflight
     if: github.event.schedule == '0 6 * * 1' || inputs.job == 'plan-and-audit'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -182,6 +218,7 @@ jobs:
 
   # ---- Tue/Thu: fixer + content agents, opens a PR. Never pushes to main directly. ----
   build:
+    needs: preflight
     if: github.event.schedule == '0 6 * * 2,4' || inputs.job == 'build'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -242,6 +279,7 @@ jobs:
 
   # ---- Any PR opened by the build job: test, then publish only if it passes. ----
   test-and-publish:
+    needs: preflight
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -278,6 +316,7 @@ jobs:
 
   # ---- Daily: ping IndexNow / Search Console for anything newly live, check for regressions. ----
   distribute:
+    needs: preflight
     if: github.event.schedule == '0 7 * * *' || inputs.job == 'distribute'
     runs-on: ubuntu-latest
     timeout-minutes: 45

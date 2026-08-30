@@ -140,6 +140,7 @@ claude-seo/
     ucp_check.py                 # UCP (Universal Commerce Protocol) profile auditor
     unlighthouse_run.py          # Unlighthouse CLI wrapper (site-wide Lighthouse)
     validate_backlink_report.py  # Backlink report validation
+    preflight_check.py           # Proves growth-loop credentials with real API calls (gate)
     portability_check.py         # Cross-platform portability lint for SKILL.md files
     consistency_check.py         # Reference-graph gate: dead refs, routing, lock, orphans
     release_sign.py              # SHA-256 manifest generator for release signing
