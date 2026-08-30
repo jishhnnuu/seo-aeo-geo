@@ -13,7 +13,7 @@ Open a [GitHub Issue](https://github.com/jishhnnuu/seo-aeo-geo/issues) with:
 
 ## Suggesting Features
 
-Use [GitHub Discussions](https://github.com/jishhnnuu/seo-aeo-geo/discussions) for feature ideas and questions.
+Open a [GitHub Issue](https://github.com/jishhnnuu/seo-aeo-geo/issues/new/choose) for feature ideas and questions.
 
 ## Pull Requests
 

@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Question or Discussion
-    url: https://github.com/jishhnnuu/seo-aeo-geo/discussions
-    about: Ask questions and discuss ideas in GitHub Discussions
+  - name: Question or idea
+    url: https://github.com/jishhnnuu/seo-aeo-geo/issues/new/choose
+    about: Open an issue — questions and feature ideas are welcome there
