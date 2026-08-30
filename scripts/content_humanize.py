@@ -102,10 +102,46 @@ def _preserve_case(match_text: str, replacement: str) -> str:
     return replacement
 
 
+# Em dash (U+2014) and en dash (U+2013) used as sentence punctuation are among
+# the loudest AI-writing tells, and this project bans them outright in prose.
+# Handled as a positional pass rather than a phrase swap: the correct
+# replacement depends on where the dash sits, not on the words around it.
+_DASH_RULES = (
+    # " word - word " used parenthetically -> comma
+    (re.compile(r"\s+[\u2014\u2013]\s+"), ", ", "dash-to-comma"),
+    # no-space form: word—word -> word, word
+    (re.compile(r"(?<=[A-Za-z0-9])[\u2014\u2013](?=[A-Za-z0-9])"), ", ", "dash-to-comma-tight"),
+    # leading dash on a line (a stray bullet) -> hyphen bullet
+    (re.compile(r"(?m)^\s*[\u2014\u2013]\s+"), "- ", "dash-to-bullet"),
+    # anything left over
+    (re.compile(r"[\u2014\u2013]"), "-", "dash-to-hyphen"),
+)
+
+
+def strip_dashes(text: str) -> tuple:
+    """Replace em/en dashes with plain punctuation. Returns (text, changes).
+
+    Numeric ranges (2024-2026) are left alone: an en dash between digits is
+    typographically correct and is not an AI tell.
+    """
+    changes = []
+    out = text
+    # Protect digit ranges before the general rules run.
+    out = re.sub(r"(?<=\d)[\u2013](?=\d)", "\x00RANGE\x00", out)
+    for pattern, repl, label in _DASH_RULES:
+        def _r(m):
+            changes.append({"label": label, "from": m.group(0), "to": repl})
+            return repl
+        out = pattern.sub(_r, out)
+    out = out.replace("\x00RANGE\x00", "\u2013")
+    return out, changes
+
+
 def humanize(text: str) -> dict:
     """Apply every replacement; return the cleaned text plus a change log."""
     changes: list[dict] = []
-    cleaned = text
+    cleaned, dash_changes = strip_dashes(text)
+    changes.extend(dash_changes)
 
     for pattern, replacement, label in _PATTERNS:
         def _repl(match):

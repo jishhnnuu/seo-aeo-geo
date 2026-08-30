@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-08-30
+
+### Added
+
+- **No em dashes, enforced at three layers.** The repository claimed past
+  em-dash sweeps in its history but had no rule and no check, so nothing stopped
+  new ones. Now: `content_humanize.py` strips em and en dashes automatically
+  (leaving numeric ranges intact), the writing standard is stated in every agent
+  and skill that produces text, the build job runs the humanizer over each draft
+  before committing, and `seo-tester` treats a dash in shipped copy as a
+  blocking FAIL. A rule that only lives in an instruction is a suggestion.
+
 ## [1.1.1] - 2026-08-30
 
 ### Added

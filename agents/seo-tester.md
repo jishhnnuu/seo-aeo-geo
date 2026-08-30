@@ -75,6 +75,22 @@ overall verdict (`PASS` / `FAIL`). This verdict is what the CI status
 check and `seo-publisher` read — be unambiguous, always state it as the
 first line of the report (`VERDICT: PASS` or `VERDICT: FAIL`).
 
+### Writing-standards check (blocking)
+
+Scan every file this change adds or modifies that ships text to the site:
+page copy, titles, meta descriptions, headings, JSON-LD `description` and
+`name` fields.
+
+Any em dash (U+2014) or en dash (U+2013) used as sentence punctuation is a
+**FAIL**, not a warning. An en dash between digits in a numeric range is the
+only permitted use. Report the file and the offending line, and state that
+`claude-seo run content_humanize.py` fixes it automatically.
+
+This blocks a publish for the same reason a broken schema does: the point of
+the system is copy that reads as though a person wrote it, and this is the
+single most reliable signal that one did not. A rule that only lives in an
+instruction is a suggestion; this check is what makes it a rule.
+
 ## Phase 2 — Post-publish verification (after a deploy actually goes live)
 
 1. Confirm the live URL returns 200 and its content matches the deployed

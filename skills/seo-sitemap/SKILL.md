@@ -9,7 +9,7 @@ argument-hint: "[url or generate]"
 license: MIT
 metadata:
   author: jishhnnuu
-  version: "1.1.1"
+  version: "1.2.0"
   category: seo
 ---
 

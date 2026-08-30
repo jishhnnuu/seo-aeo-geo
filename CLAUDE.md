@@ -213,6 +213,20 @@ claude-seo/
 - Manual Python dependencies install into `~/.claude/skills/seo/.venv/`
 - Test with `python3 -m pytest tests/` after changes (if applicable)
 
+## Writing Rules
+
+- **No em dashes (U+2014) or en dashes (U+2013) as sentence punctuation.** This
+  is a hard rule with no exceptions in prose: page copy, titles, meta
+  descriptions, headings, reports, docs, commit messages. Use a comma, colon or
+  full stop, or rewrite the sentence. An en dash inside a numeric range
+  (2024-2026) is the only permitted use, and a hyphen is preferred even there.
+- `scripts/content_humanize.py` enforces this automatically and also strips the
+  wider register of machine-writing tells. Run it over any generated draft
+  before it ships.
+- Avoid: "delve", "leverage" as a verb, "in today's fast-paced world", "it's
+  important to note", "unlock", "elevate", "seamless", "robust", and closing
+  paragraphs that restate what was just said.
+
 ## Security Rules
 
 - **Never commit credentials**: `.env`, `client_secret*.json`, `oauth-token.json`, `service_account*.json` are all in `.gitignore`

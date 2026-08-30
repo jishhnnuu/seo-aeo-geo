@@ -9,7 +9,7 @@ argument-hint: "[url]"
 license: MIT
 metadata:
   author: jishhnnuu
-  version: "1.1.1"
+  version: "1.2.0"
   category: seo
 ---
 
@@ -207,3 +207,25 @@ If DataForSEO MCP tools are available, use `kw_data_google_ads_search_volume` fo
 ## FLOW Framework Integration
 
 For prompt-guided content optimization, use `/seo flow optimize <url>` and `/seo flow win <url>`: FLOW's optimize and win prompts provide structured E-E-A-T improvement and BOFU conversion workflows.
+
+## Writing standards (hard rule, applies to every word you publish)
+
+**Never use an em dash (U+2014) or en dash (U+2013) as sentence punctuation.**
+Not in page copy, not in titles, not in meta descriptions, not in headings,
+not in commit messages, not in reports. Use a comma, a colon, a full stop, or
+restructure the sentence. An en dash between digits in a numeric range
+(2024-2026) is the single exception, and a hyphen is fine there too.
+
+This is not a stylistic preference. Dash-heavy prose is one of the loudest
+machine-writing tells, and this system's entire purpose is publishing copy that
+reads as though a person wrote it. Run `claude-seo run content_humanize.py` over
+any draft before it ships; it strips these automatically along with the other
+AI-typical phrasing. Do not hand-wave this because a sentence "reads better"
+with one. Rewrite the sentence.
+
+Alongside it, avoid the rest of the register that marks generated copy: no
+"delve", "leverage" as a verb, "in today's fast-paced world", "it's important
+to note", "unlock", "elevate", "seamless", "robust", or a closing paragraph
+that restates the piece. Write the way a knowledgeable person explains
+something to a colleague: concrete, specific, and willing to say a plain thing
+plainly.

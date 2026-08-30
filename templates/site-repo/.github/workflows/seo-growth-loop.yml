@@ -275,7 +275,12 @@ jobs:
             listed as AUTO-tier in the roadmap (seo-fixer-writer still
             re-verifies each one after applying it). For each content item
             on the roadmap, use the matching content brief to draft the
-            page or post as a file in this repo. Run the seo-outreach agent
+            page or post as a file in this repo. Before committing any draft,
+            run `claude-seo run content_humanize.py` over it and commit the
+            cleaned version. HARD RULE: no em dashes or en dashes as sentence
+            punctuation anywhere in published copy, titles, headings or meta
+            descriptions. Use commas, colons or full stops, or rewrite the
+            sentence. Numeric ranges are the only exception. Run the seo-outreach agent
             against any off-page/citation items on the roadmap — it follows
             its own non-blocking rules and writes reports/OUTREACH-LOG.md
             and queues anything needing a human action to

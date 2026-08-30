@@ -12,7 +12,7 @@ license: MIT
 metadata:
   author: jishhnnuu
   original_author: "Dan Colta (Pro Hub Challenge)"
-  version: "1.1.1"
+  version: "1.2.0"
   category: seo
 ---
 

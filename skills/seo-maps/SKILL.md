@@ -14,7 +14,7 @@ license: MIT
 compatibility: "DataForSEO MCP for Tier 1+, Google Maps API for Tier 2"
 metadata:
   author: jishhnnuu
-  version: "1.1.1"
+  version: "1.2.0"
   category: seo
 ---
 
