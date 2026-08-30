@@ -12,7 +12,7 @@ argument-hint: "[command] [url|property]"
 license: MIT
 metadata:
   author: jishhnnuu
-  version: "1.4.1"
+  version: "1.4.2"
   category: seo
 ---
 

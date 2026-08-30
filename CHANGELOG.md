@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-08-30
+
+### Security
+
+- `lxml` floor raised to 6.1.2, picking up further libxml2 patches on top of
+  the CVE-2025-24928 fix the previous floor already required.
+
+### Changed
+
+- Reviewed and declined four dependency floor raises proposed by Dependabot.
+  A `>=` floor already accepts every newer release, so raising one buys nothing
+  and only excludes users on older but working versions. None of the four had a
+  security justification, and the project needs nothing from them: numpy is used
+  only for `linspace` and `pi`, both unchanged since 1.x, and google-ads is the
+  standard client import. The numpy proposal was the clearest to decline, moving
+  the floor across the 1.x to 2.x major boundary and dropping every numpy 1.x
+  user for no gain. Verified separately that the code runs correctly under numpy
+  2.4.6, so the existing `>=1.26.0,<3.0.0` range genuinely supports both.
+
 ## [1.4.1] - 2026-08-30
 
 ### Fixed

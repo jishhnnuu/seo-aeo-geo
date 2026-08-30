@@ -14,7 +14,7 @@ compatibility: "Enhanced with DataForSEO Merchant API (optional)"
 metadata:
   author: jishhnnuu
   original_author: "Matej Marjanovic (Pro Hub Challenge)"
-  version: "1.4.1"
+  version: "1.4.2"
   category: seo
 ---
 
