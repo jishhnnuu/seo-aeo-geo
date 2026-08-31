@@ -11,7 +11,7 @@ argument-hint: "[stage] [url|topic]"
 license: MIT
 metadata:
   author: jishhnnuu
-  version: "1.5.1"
+  version: "1.5.2"
   category: seo
 ---
 

@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.2] - 2026-08-31
+
+### Fixed
+
+- **The gate reported a present PAT as missing, and blocked everything.**
+  `check_pat()` read `HAS_PAT`, which the template set on only one of the two
+  preflight steps. The `--gate` step saw it empty, declared the credential
+  absent, and failed FATAL, taking all four downstream jobs with it. Caught on a
+  live run where the workflow environment plainly showed
+  `HAS_GROWTH_LOOP_PAT: true` two lines above the error claiming it was unset.
+  The check now reads the workflow-level `HAS_GROWTH_LOOP_PAT`, visible to every
+  step, and falls back to `HAS_PAT`; the template also passes `HAS_PAT` to the
+  gate step so either alone is sufficient.
+
 ## [1.5.1] - 2026-08-31
 
 ### Fixed

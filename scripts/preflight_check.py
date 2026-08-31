@@ -132,7 +132,14 @@ def check_simple(name, env, note_absent):
 
 
 def check_pat():
-    if os.environ.get("HAS_PAT", "").lower() == "true":
+    # Read the workflow-level variable first. HAS_PAT was only ever set on one
+    # step, so the gate step saw it empty and declared a present PAT missing --
+    # a false FATAL that blocked every downstream job. HAS_GROWTH_LOOP_PAT is
+    # declared at workflow level and is therefore visible to every step.
+    present = (os.environ.get("HAS_GROWTH_LOOP_PAT")
+               or os.environ.get("HAS_PAT")
+               or "").lower() == "true"
+    if present:
         return WORKING, "GROWTH_LOOP_PAT is set", ""
     return ABSENT, "GROWTH_LOOP_PAT is not set", (
         "FATAL. Pull requests opened by the build job will not trigger the "

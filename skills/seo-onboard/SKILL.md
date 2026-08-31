@@ -5,7 +5,7 @@ user-invocable: true
 argument-hint: "<live site url>"
 license: MIT
 metadata:
-  version: "1.5.1"
+  version: "1.5.2"
   category: seo
 ---
 

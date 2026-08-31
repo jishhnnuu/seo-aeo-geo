@@ -183,7 +183,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL -o "${RUNNER_TEMP}/preflight_check.py" \
-            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.5.0/scripts/preflight_check.py
+            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.5.2/scripts/preflight_check.py
 
       - name: Prove every credential with a real call
         id: check
@@ -206,6 +206,8 @@ jobs:
         continue-on-error: true
 
       - name: Fail loudly if the loop cannot do its job at all
+        env:
+          HAS_PAT: ${{ secrets.GROWTH_LOOP_PAT != '' }}
         run: |
           set -euo pipefail
           python3 "${RUNNER_TEMP}/preflight_check.py" --gate

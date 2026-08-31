@@ -11,7 +11,7 @@ license: MIT
 compatibility: "Requires Firecrawl MCP server"
 metadata:
   author: jishhnnuu
-  version: "1.5.1"
+  version: "1.5.2"
   category: seo
 ---
 
