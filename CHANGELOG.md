@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-08-31
+
+### Fixed
+
+- **The preflight gate could never have run.** It is a plain `run:` step against
+  the site repo's checkout, but `preflight_check.py` ships with the plugin and
+  exists only inside the `claude-code-action` steps, so the step failed with
+  "No such file or directory" on every run. Because all four other jobs declare
+  `needs: preflight`, the gate added to prevent silent failures would instead
+  have blocked the entire loop. Caught by dispatching a real run against a live
+  site repo rather than by reading the file. The step now fetches the script
+  from the engine repo over HTTPS, pinned to the same release tag the plugin is
+  pinned to, so the gate cannot drift from the agents it gates.
+
 ## [1.5.0] - 2026-08-30
 
 ### Fixed
