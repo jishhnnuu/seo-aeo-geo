@@ -51,8 +51,10 @@
 # not fire on the merge.
 #
 # COST: Actions minutes are unlimited on public repos but metered on private
-# ones (2,000/month on Free, 3,000 on Pro). This loop runs roughly ten agent
-# jobs a week. Every job below sets timeout-minutes so one hung run cannot
+# ones (2,000/month on Free, 3,000 on Pro). This loop runs six agent jobs a
+# week (1 audit, 2 build, 2 distribute, 1 report); distribution used to run
+# daily, which was four extra agent runs a week for a job that only pings
+# IndexNow and checks indexing. Every job below sets timeout-minutes so one hung run cannot
 # eat the month; watch Settings -> Billing for the first few weeks.
 #
 # KEEPING THE SCHEDULE ALIVE: GitHub disables scheduled workflows in a repo
@@ -66,10 +68,14 @@ on:
   schedule:
     - cron: "0 6 * * 1"        # plan + full audit: Monday 06:00 UTC
     - cron: "0 6 * * 2,4"      # fix + content build: Tuesday & Thursday 06:00 UTC
-    - cron: "0 7 * * *"        # distribution + indexing check: daily 07:00 UTC
+    - cron: "0 7 * * 1,4"      # distribution + indexing check: Mon & Thu 07:00 UTC
     - cron: "0 9 * * 1"        # weekly report: Monday 09:00 UTC, after the audit lands
   pull_request:
-    branches: [seo/**]
+    # NOTE: on.pull_request.branches filters the BASE branch. The build job
+    # opens its PR FROM seo/** INTO the deploy branch, so filtering on
+    # seo/** here would match nothing and test-and-publish would never run,
+    # stalling the loop silently. Head-branch filtering is not available at
+    # trigger level, so it is done in the test-and-publish job's `if` below.
     types: [opened, synchronize, reopened]
   workflow_dispatch:           # lets you trigger one job manually from the Actions tab
     inputs:
@@ -184,6 +190,14 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            TOKEN BUDGET. Every run here costs the owner's subscription.
+            Read only the files you actually need, and read a slice rather
+            than a whole file where a slice answers the question. Do not
+            re-read a file you have already read this run. Prefer grep over
+            opening files to search. Do not restate your plan or narrate
+            progress. Keep every report you write under 400 words. Stop as
+            soon as the job is done rather than looking for extra work.
+
             First: if the environment variable HAS_GROWTH_LOOP_PAT is not
             "true", the GROWTH_LOOP_PAT secret is missing. That means pull
             requests opened by the build job will not trigger the
@@ -263,6 +277,14 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            TOKEN BUDGET. Every run here costs the owner's subscription.
+            Read only the files you actually need, and read a slice rather
+            than a whole file where a slice answers the question. Do not
+            re-read a file you have already read this run. Prefer grep over
+            opening files to search. Do not restate your plan or narrate
+            progress. Keep every report you write under 400 words. Stop as
+            soon as the job is done rather than looking for extra work.
+
             First, preflight: confirm every credential this run needs
             actually works, by making a real call with each rather than
             checking that a file or env var exists — GOOGLE_API_KEY against
@@ -320,7 +342,9 @@ jobs:
   # ---- Any PR opened by the build job: test, then publish only if it passes. ----
   test-and-publish:
     needs: preflight
-    if: github.event_name == 'pull_request'
+    if: >-
+      github.event_name == 'pull_request'
+      && startsWith(github.head_ref, 'seo/')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -335,6 +359,14 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            TOKEN BUDGET. Every run here costs the owner's subscription.
+            Read only the files you actually need, and read a slice rather
+            than a whole file where a slice answers the question. Do not
+            re-read a file you have already read this run. Prefer grep over
+            opening files to search. Do not restate your plan or narrate
+            progress. Keep every report you write under 400 words. Stop as
+            soon as the job is done rather than looking for extra work.
+
             Run the seo-tester agent's full pre-publish gate against this
             branch's changes. If seo-config.yml sets site.netlify_site_name,
             the host has already built this PR — poll
@@ -357,7 +389,7 @@ jobs:
   # ---- Daily: ping IndexNow / Search Console for anything newly live, check for regressions. ----
   distribute:
     needs: preflight
-    if: github.event.schedule == '0 7 * * *' || inputs.job == 'distribute'
+    if: github.event.schedule == '0 7 * * 1,4' || inputs.job == 'distribute'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -371,6 +403,14 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            TOKEN BUDGET. Every run here costs the owner's subscription.
+            Read only the files you actually need, and read a slice rather
+            than a whole file where a slice answers the question. Do not
+            re-read a file you have already read this run. Prefer grep over
+            opening files to search. Do not restate your plan or narrate
+            progress. Keep every report you write under 400 words. Stop as
+            soon as the job is done rather than looking for extra work.
+
             Read reports/PUBLISH-LOG.md for anything published since the
             last distribute run. For each new/changed URL, confirm IndexNow
             and (if Google credentials are configured) Search Console
@@ -400,6 +440,14 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            TOKEN BUDGET. Every run here costs the owner's subscription.
+            Read only the files you actually need, and read a slice rather
+            than a whole file where a slice answers the question. Do not
+            re-read a file you have already read this run. Prefer grep over
+            opening files to search. Do not restate your plan or narrate
+            progress. Keep every report you write under 400 words. Stop as
+            soon as the job is done rather than looking for extra work.
+
             Write reports/WEEKLY-REPORT.md — the one thing the site owner
             actually reads. Assume they have not opened the repo all week and
             will read this on a phone. Lead with the numbers, not the activity.
