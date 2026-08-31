@@ -183,7 +183,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL -o "${RUNNER_TEMP}/preflight_check.py" \
-            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.5.2/scripts/preflight_check.py
+            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.6.0/scripts/preflight_check.py
 
       - name: Prove every credential with a real call
         id: check
@@ -299,6 +299,29 @@ jobs:
           claude_args: |
             --allowedTools "Bash,Read,Write,Glob,Grep,Task"
 
+
+      - name: Explain an agent failure that is really a token failure
+        if: failure()
+        run: |
+          set -uo pipefail
+          OUT="${RUNNER_TEMP}/claude-execution-output.json"
+          # A rejected token does not surface as an auth error. The action
+          # installs, initialises, then returns is_error with no model call:
+          # zero cost and an empty modelUsage. Without this step the operator
+          # sees only "Claude execution failed" and reasonably starts debugging
+          # the prompt or the plugin, neither of which is at fault.
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
+                           && grep -q '"modelUsage": *{}' "$OUT"; then
+            echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
+            {
+              echo "## This looks like a token failure, not a loop failure"
+              echo ""
+              echo "The agent initialised and then made no model call at all."
+              echo "Run the **Claude token check** workflow to confirm, then"
+              echo "regenerate with \`claude setup-token\` and update the"
+              echo "CLAUDE_CODE_OAUTH_TOKEN secret."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
   # ---- Tue/Thu: fixer + content agents, opens a PR. Never pushes to main directly. ----
   build:
     needs: preflight
@@ -378,6 +401,29 @@ jobs:
           claude_args: |
             --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Task"
 
+
+      - name: Explain an agent failure that is really a token failure
+        if: failure()
+        run: |
+          set -uo pipefail
+          OUT="${RUNNER_TEMP}/claude-execution-output.json"
+          # A rejected token does not surface as an auth error. The action
+          # installs, initialises, then returns is_error with no model call:
+          # zero cost and an empty modelUsage. Without this step the operator
+          # sees only "Claude execution failed" and reasonably starts debugging
+          # the prompt or the plugin, neither of which is at fault.
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
+                           && grep -q '"modelUsage": *{}' "$OUT"; then
+            echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
+            {
+              echo "## This looks like a token failure, not a loop failure"
+              echo ""
+              echo "The agent initialised and then made no model call at all."
+              echo "Run the **Claude token check** workflow to confirm, then"
+              echo "regenerate with \`claude setup-token\` and update the"
+              echo "CLAUDE_CODE_OAUTH_TOKEN secret."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
   # ---- Any PR opened by the build job: test, then publish only if it passes. ----
   test-and-publish:
     needs: preflight
@@ -425,6 +471,29 @@ jobs:
             --allowedTools "Bash,Read,Write,Glob,Grep,Task,mcp__github_inline_comment__create_inline_comment"
             --comment
 
+
+      - name: Explain an agent failure that is really a token failure
+        if: failure()
+        run: |
+          set -uo pipefail
+          OUT="${RUNNER_TEMP}/claude-execution-output.json"
+          # A rejected token does not surface as an auth error. The action
+          # installs, initialises, then returns is_error with no model call:
+          # zero cost and an empty modelUsage. Without this step the operator
+          # sees only "Claude execution failed" and reasonably starts debugging
+          # the prompt or the plugin, neither of which is at fault.
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
+                           && grep -q '"modelUsage": *{}' "$OUT"; then
+            echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
+            {
+              echo "## This looks like a token failure, not a loop failure"
+              echo ""
+              echo "The agent initialised and then made no model call at all."
+              echo "Run the **Claude token check** workflow to confirm, then"
+              echo "regenerate with \`claude setup-token\` and update the"
+              echo "CLAUDE_CODE_OAUTH_TOKEN secret."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
   # ---- Daily: ping IndexNow / Search Console for anything newly live, check for regressions. ----
   distribute:
     needs: preflight
@@ -461,6 +530,29 @@ jobs:
           claude_args: |
             --allowedTools "Bash,Read,Write,Glob,Grep,Task"
 
+
+      - name: Explain an agent failure that is really a token failure
+        if: failure()
+        run: |
+          set -uo pipefail
+          OUT="${RUNNER_TEMP}/claude-execution-output.json"
+          # A rejected token does not surface as an auth error. The action
+          # installs, initialises, then returns is_error with no model call:
+          # zero cost and an empty modelUsage. Without this step the operator
+          # sees only "Claude execution failed" and reasonably starts debugging
+          # the prompt or the plugin, neither of which is at fault.
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
+                           && grep -q '"modelUsage": *{}' "$OUT"; then
+            echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
+            {
+              echo "## This looks like a token failure, not a loop failure"
+              echo ""
+              echo "The agent initialised and then made no model call at all."
+              echo "Run the **Claude token check** workflow to confirm, then"
+              echo "regenerate with \`claude setup-token\` and update the"
+              echo "CLAUDE_CODE_OAUTH_TOKEN secret."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
   # ---- Monday, after the audit: assemble and deliver the weekly report. ----
   report:
     needs: preflight
@@ -526,6 +618,29 @@ jobs:
           claude_args: |
             --allowedTools "Bash,Read,Write,Glob,Grep,Task"
 
+
+      - name: Explain an agent failure that is really a token failure
+        if: failure()
+        run: |
+          set -uo pipefail
+          OUT="${RUNNER_TEMP}/claude-execution-output.json"
+          # A rejected token does not surface as an auth error. The action
+          # installs, initialises, then returns is_error with no model call:
+          # zero cost and an empty modelUsage. Without this step the operator
+          # sees only "Claude execution failed" and reasonably starts debugging
+          # the prompt or the plugin, neither of which is at fault.
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
+                           && grep -q '"modelUsage": *{}' "$OUT"; then
+            echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
+            {
+              echo "## This looks like a token failure, not a loop failure"
+              echo ""
+              echo "The agent initialised and then made no model call at all."
+              echo "Run the **Claude token check** workflow to confirm, then"
+              echo "regenerate with \`claude setup-token\` and update the"
+              echo "CLAUDE_CODE_OAUTH_TOKEN secret."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Email the report (only if SMTP secrets are set)
         if: env.HAS_SMTP == 'true'
         continue-on-error: true          # a mail failure must never fail the loop

@@ -2,7 +2,7 @@
 name: seo-screaming-frog
 description: Screaming Frog SEO Spider CLI wrapper (extension). Enterprise-scale crawling — tens of thousands to millions of URLs, bulk CSV export, redirect-chain mapping — for sites past what seo-audit's ~500-page subagent crawl or seo-firecrawl's API scraping are built for. Requires a Screaming Frog SEO Spider licence you already own.
 metadata:
-  version: "1.5.2"
+  version: "1.6.0"
 compatibility: "Requires a purchased Screaming Frog SEO Spider licence with its CLI binary (screamingfrogseospider) on $PATH. Run extensions/screaming-frog/install.sh to check and register."
 ---
 

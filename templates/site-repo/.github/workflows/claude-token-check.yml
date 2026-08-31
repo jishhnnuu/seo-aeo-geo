@@ -1,0 +1,69 @@
+# Answers one question in about a minute: is this repository's
+# CLAUDE_CODE_OAUTH_TOKEN actually working?
+#
+# Worth having because the failure it detects is genuinely hard to read. A bad
+# token does not produce an authentication error. The action installs Claude
+# Code, installs the plugins, initialises successfully, and only then returns:
+#
+#   "subtype": "success", "is_error": true,
+#   "num_turns": 1, "duration_ms": 134, "total_cost_usd": 0, "modelUsage": {}
+#
+# Zero cost and an empty modelUsage mean no model call was ever made. Everything
+# up to that point looks healthy, so the natural assumption is that the prompt
+# or the plugin is at fault, and the next hour goes into debugging the wrong
+# thing. This workflow removes that hour: trivial prompt, no plugins, same
+# secret. If it fails, the token is the problem and nothing else is.
+#
+# Run it from the Actions tab whenever a loop job fails with that signature, and
+# after every token rotation.
+#
+# Fix when it fails: run `claude setup-token` locally, then save the new value
+# as the CLAUDE_CODE_OAUTH_TOKEN repository secret. Subscription tokens expire,
+# so expect to do this periodically.
+
+name: Claude token check
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Confirm the secret exists at all
+        run: |
+          set -euo pipefail
+          if [ -z "${TOKEN}" ]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is not set on this repository. Secrets do not travel between repositories, and a personal account has no organization-level Actions secrets, so a copy held elsewhere does not apply here."
+            exit 1
+          fi
+          echo "CLAUDE_CODE_OAUTH_TOKEN is present. Testing whether it works." >> "$GITHUB_STEP_SUMMARY"
+        env:
+          TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: "Reply with exactly: TOKEN OK"
+          claude_args: |
+            --max-turns 2
+
+      - name: Verdict
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "Token works. A loop failure is not the token." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## Token is not working" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "The secret is set but the model refused it. Run \`claude setup-token\` locally and save the new value as the CLAUDE_CODE_OAUTH_TOKEN repository secret." >> "$GITHUB_STEP_SUMMARY"
+          fi

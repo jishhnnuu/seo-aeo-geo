@@ -7,7 +7,7 @@ license: MIT
 compatibility: "Requires nanobanana MCP server"
 metadata:
   author: jishhnnuu
-  version: "1.5.2"
+  version: "1.6.0"
   category: seo
 ---
 

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-08-31
+
+### Added
+
+- **`claude-token-check.yml`**, a one-click answer to "is the token working?".
+  A rejected `CLAUDE_CODE_OAUTH_TOKEN` produces no authentication error: the
+  action installs Claude Code, installs the plugins, initialises, then returns
+  `is_error` with `total_cost_usd: 0` and an empty `modelUsage`, meaning no
+  model call was made. Everything before that looks healthy, so the natural
+  response is to debug the prompt or the plugin, neither of which is at fault.
+  This runs a trivial prompt with no plugins against the same secret and
+  settles it in a minute.
+- Each of the five agent jobs now inspects the execution output on failure and,
+  on that signature, states plainly that the token is the cause. Diagnosed by
+  reproducing the failure against a live repository, not by reading files.
+
 ## [1.5.2] - 2026-08-31
 
 ### Fixed

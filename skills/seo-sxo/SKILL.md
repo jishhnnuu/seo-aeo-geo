@@ -13,7 +13,7 @@ license: MIT
 metadata:
   author: jishhnnuu
   original_author: "Florian Schmitz (Pro Hub Challenge)"
-  version: "1.5.2"
+  version: "1.6.0"
   category: seo
 ---
 
