@@ -40,7 +40,7 @@ autonomy:
 cadence:
   audit: "weekly"          # seo-planner + full seo-audit
   build: "twice_weekly"    # seo-fixer-writer + content agents, opens a PR
-  distribute: "daily"      # IndexNow ping + Search Console checks for anything newly live
+  distribute: "twice_weekly" # IndexNow ping + Search Console checks for anything newly live
 
 testing:
   performance_regression_threshold: 5   # Lighthouse/Unlighthouse points allowed to drop before seo-tester fails the change
