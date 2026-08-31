@@ -1,6 +1,6 @@
 [project]
 name = "claude-seo-unified"
-version = "1.8.0"
+version = "1.8.1"
 description = "Autonomous multi-agent website optimiser for Claude Code"
 requires-python = ">=3.10"
 license = "MIT"

@@ -13,7 +13,7 @@ license: MIT
 compatibility: "Requires DataForSEO MCP server"
 metadata:
   author: jishhnnuu
-  version: "1.8.0"
+  version: "1.8.1"
   category: seo
 ---
 

@@ -183,7 +183,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL -o "${RUNNER_TEMP}/preflight_check.py" \
-            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.8.0/scripts/preflight_check.py
+            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.8.1/scripts/preflight_check.py
 
       - name: Prove every credential with a real call
         id: check
@@ -233,7 +233,7 @@ jobs:
         # missing launcher shim is not fatal.
         run: |
           set -uo pipefail
-          TAG="v1.6.0"
+          TAG="v1.8.1"
           curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
             "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
           if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
@@ -449,7 +449,7 @@ jobs:
         # missing launcher shim is not fatal.
         run: |
           set -uo pipefail
-          TAG="v1.6.0"
+          TAG="v1.8.1"
           curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
             "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
           if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
@@ -618,7 +618,7 @@ jobs:
         # missing launcher shim is not fatal.
         run: |
           set -uo pipefail
-          TAG="v1.6.0"
+          TAG="v1.8.1"
           curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
             "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
           if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
@@ -749,7 +749,7 @@ jobs:
         # missing launcher shim is not fatal.
         run: |
           set -uo pipefail
-          TAG="v1.6.0"
+          TAG="v1.8.1"
           curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
             "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
           if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
@@ -873,7 +873,7 @@ jobs:
         # missing launcher shim is not fatal.
         run: |
           set -uo pipefail
-          TAG="v1.6.0"
+          TAG="v1.8.1"
           curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
             "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
           if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
