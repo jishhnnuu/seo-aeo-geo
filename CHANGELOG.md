@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-08-31
+
+### Fixed
+
+- **The artifact-verification step checked the local filesystem, not the
+  remote.** `[ -f "$f" ]` proves a file exists in this run's ephemeral
+  checkout, which is destroyed the moment the job ends. A run that wrote its
+  reports locally and then failed to push, or pushed to the wrong ref, passed
+  the check and reported success while `origin/main` was untouched. Confirmed
+  on a live run: the job reported success and created the pinned inbox issue,
+  but none of the four report files ever reached `origin/main`. The check now
+  does `git fetch` and `git show origin/<branch>:<path>` for each file, which
+  is the only test that proves the work actually survived.
+- The prompt had the identical blind spot: it told the agent to verify with
+  `git log --oneline -1` and `ls reports/`, both of which only prove local
+  state. It now requires an explicit `git push`, followed by a fetch-and-show
+  check against the remote as the last action before finishing.
+- `reports/AUDIT.md`, named in the definition of done, does not correspond to
+  any file a skill actually writes; the real audit report lands under
+  `{domain}-audit/FULL-AUDIT-REPORT.md`, not `reports/`. Replaced with
+  `reports/CONTENT-CALENDAR.md`, the fourth file seo-planner genuinely
+  produces, in both the prompt and the bash check, which had disagreed with
+  each other on the file list.
+
 ## [1.7.0] - 2026-08-31
 
 ### Fixed

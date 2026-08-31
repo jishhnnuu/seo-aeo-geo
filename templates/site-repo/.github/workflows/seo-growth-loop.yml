@@ -183,7 +183,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL -o "${RUNNER_TEMP}/preflight_check.py" \
-            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.7.0/scripts/preflight_check.py
+            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.8.0/scripts/preflight_check.py
 
       - name: Prove every credential with a real call
         id: check
@@ -335,9 +335,16 @@ jobs:
             reports/CONTENT-CALENDAR.md, reports/KPI-TRACKER.md, and
             reports/HUMAN-INBOX.md now exist and are non-empty before you
             proceed, using the most recent audit if one exists. Then run a full /seo audit
-            against site.url from seo-config.yml. Commit reports/ directly
-            to the default branch with message "chore(seo): weekly plan +
-            audit". Do not touch any file outside reports/. Finally, sync
+            against site.url from seo-config.yml. Then, in this same turn:
+            `git add reports/`, `git commit -m "chore(seo): weekly plan +
+            audit"`, then `git push origin HEAD:${{ github.ref_name }}`.
+            A local commit that is never pushed vanishes when this job ends,
+            because the runner is destroyed; the remote branch is the only
+            copy that survives. After pushing, run `git fetch origin
+            ${{ github.ref_name }} && git show
+            origin/${{ github.ref_name }}:reports/ROADMAP.md | head -1` and
+            confirm it returns real content, not an error, before you
+            consider this done. Do not touch any file outside reports/. Finally, sync
             reports/HUMAN-INBOX.md to a single pinned GitHub issue titled
             "Growth Loop: needs your input". Search open issues for that
             exact title first. If it does not exist, create it with `gh
@@ -361,34 +368,41 @@ jobs:
             body. If the queue is empty, say so plainly rather than
             leaving stale items. If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
             DEFINITION OF DONE. This job has not finished until all of these
-            exist in the repository and are committed to the default branch:
-            reports/ROADMAP.md, reports/KPI-TRACKER.md,
-            reports/HUMAN-INBOX.md, and reports/AUDIT.md holding the audit
-            findings. Before you finish, run `git log --oneline -1` and
-            `ls reports/` and confirm your commit is there. A run that ends
-            without them has failed even if nothing errored, and the very
-            next step is seo-resolver, not a summary.
+            exist ON THE REMOTE, not merely in this run's local checkout:
+            reports/ROADMAP.md, reports/CONTENT-CALENDAR.md,
+            reports/KPI-TRACKER.md, and reports/HUMAN-INBOX.md. `git log --oneline -1` and `ls reports/` only prove
+            local state, which is destroyed with this container the moment
+            the job ends; they do NOT prove the push succeeded. The only
+            valid confirmation is `git fetch origin ${{ github.ref_name }}`
+            followed by `git show origin/${{ github.ref_name }}:<path>` for
+            each file, succeeding with real content. Do this as your last
+            action. A run that ends without every file confirmed on the
+            remote has failed even if nothing errored, and the very next
+            step is seo-resolver, not a summary.
           claude_args: |
             --max-turns 60
             --allowedTools "Bash,Read,Write,Glob,Grep,Task"
 
       - name: Verify the audit actually produced its reports
         # The agent can finish cleanly, with no error and no permission denial,
-        # having written nothing. That reported success and looked like a
-        # working loop, which is worse than a failure because it hides. Check
-        # the artifacts rather than the exit code.
+        # having written the files locally and never pushed them. A runner is
+        # ephemeral: once this job ends, anything not on the remote is gone.
+        # Checking `[ -f "$f" ]` against the local checkout only proves the
+        # files existed in this doomed container, which is why an earlier
+        # version of this check passed on a run that left origin untouched.
+        # Check the remote branch itself, which is the only copy that survives.
         run: |
           set -uo pipefail
-          git pull --quiet origin "${GITHUB_REF_NAME}" 2>/dev/null || true
+          git fetch --quiet origin "${GITHUB_REF_NAME}"
           MISSING=""
-          for f in reports/ROADMAP.md reports/KPI-TRACKER.md reports/HUMAN-INBOX.md; do
-            [ -f "$f" ] || MISSING="$MISSING $f"
+          for f in reports/ROADMAP.md reports/CONTENT-CALENDAR.md reports/KPI-TRACKER.md reports/HUMAN-INBOX.md; do
+            git show "origin/${GITHUB_REF_NAME}:$f" > /dev/null 2>&1 || MISSING="$MISSING $f"
           done
           if [ -n "$MISSING" ]; then
-            echo "::error::The agent completed without producing:$MISSING. A run that writes nothing has failed, whatever it reported. Check the job log for what it did with its turns."
+            echo "::error::These files never reached origin/${GITHUB_REF_NAME}:$MISSING. They may exist only in this run's local checkout, which is destroyed when the job ends. That means the agent wrote them but never ran a git add/commit/push that actually succeeded, or wrote them to the wrong branch. Check the job log for the commit/push step, not just whether the tool call reported success."
             exit 1
           fi
-          echo "Audit produced its reports." >> "$GITHUB_STEP_SUMMARY"
+          echo "Audit's reports confirmed present on origin/${GITHUB_REF_NAME}." >> "$GITHUB_STEP_SUMMARY"
 
 
       - name: Explain an agent failure that is really a token failure
