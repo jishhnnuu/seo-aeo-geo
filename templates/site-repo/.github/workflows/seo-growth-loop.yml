@@ -183,7 +183,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL -o "${RUNNER_TEMP}/preflight_check.py" \
-            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.6.0/scripts/preflight_check.py
+            https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/v1.7.0/scripts/preflight_check.py
 
       - name: Prove every credential with a real call
         id: check
@@ -275,6 +275,18 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            THIS IS A ONE-SHOT, NON-INTERACTIVE RUN. There is no later turn: when
+            this job's steps finish, the container is gone. If you invoke a
+            subagent, you must wait for it to actually complete and its files
+            to actually exist on disk BEFORE you end your turn. Never launch a
+            subagent asynchronously and end your turn assuming you will be
+            "notified when it finishes" or resumed afterward. That behaviour is
+            for an interactive session; here it means the subagent runs into
+            the void and nothing after it ever executes. If your subagent tool
+            offers a background or async mode, do not use it in this workflow.
+            Confirm completion the same way a human would: check that the
+            files the subagent was supposed to write are actually present with
+            Read or ls before moving on or finishing.
             TOKEN BUDGET. Every run here costs the owner's subscription.
             Read only the files you actually need, and read a slice rather
             than a whole file where a slice answers the question. Do not
@@ -318,10 +330,11 @@ jobs:
             Both append their proposed work to the roadmap for the planner to
             sequence. Neither edits any page.
 
-            Then run the seo-planner agent
-            to refresh reports/ROADMAP.md, reports/CONTENT-CALENDAR.md,
-            reports/KPI-TRACKER.md, and reports/HUMAN-INBOX.md, using the
-            most recent audit if one exists. Then run a full /seo audit
+            Then invoke seo-planner and WAIT for it to finish in this
+            same turn, confirming with Read or ls that reports/ROADMAP.md,
+            reports/CONTENT-CALENDAR.md, reports/KPI-TRACKER.md, and
+            reports/HUMAN-INBOX.md now exist and are non-empty before you
+            proceed, using the most recent audit if one exists. Then run a full /seo audit
             against site.url from seo-config.yml. Commit reports/ directly
             to the default branch with message "chore(seo): weekly plan +
             audit". Do not touch any file outside reports/. Finally, sync
@@ -464,6 +477,18 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            THIS IS A ONE-SHOT, NON-INTERACTIVE RUN. There is no later turn: when
+            this job's steps finish, the container is gone. If you invoke a
+            subagent, you must wait for it to actually complete and its files
+            to actually exist on disk BEFORE you end your turn. Never launch a
+            subagent asynchronously and end your turn assuming you will be
+            "notified when it finishes" or resumed afterward. That behaviour is
+            for an interactive session; here it means the subagent runs into
+            the void and nothing after it ever executes. If your subagent tool
+            offers a background or async mode, do not use it in this workflow.
+            Confirm completion the same way a human would: check that the
+            files the subagent was supposed to write are actually present with
+            Read or ls before moving on or finishing.
             TOKEN BUDGET. Every run here costs the owner's subscription.
             Read only the files you actually need, and read a slice rather
             than a whole file where a slice answers the question. Do not
@@ -621,6 +646,18 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            THIS IS A ONE-SHOT, NON-INTERACTIVE RUN. There is no later turn: when
+            this job's steps finish, the container is gone. If you invoke a
+            subagent, you must wait for it to actually complete and its files
+            to actually exist on disk BEFORE you end your turn. Never launch a
+            subagent asynchronously and end your turn assuming you will be
+            "notified when it finishes" or resumed afterward. That behaviour is
+            for an interactive session; here it means the subagent runs into
+            the void and nothing after it ever executes. If your subagent tool
+            offers a background or async mode, do not use it in this workflow.
+            Confirm completion the same way a human would: check that the
+            files the subagent was supposed to write are actually present with
+            Read or ls before moving on or finishing.
             TOKEN BUDGET. Every run here costs the owner's subscription.
             Read only the files you actually need, and read a slice rather
             than a whole file where a slice answers the question. Do not
@@ -740,6 +777,18 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            THIS IS A ONE-SHOT, NON-INTERACTIVE RUN. There is no later turn: when
+            this job's steps finish, the container is gone. If you invoke a
+            subagent, you must wait for it to actually complete and its files
+            to actually exist on disk BEFORE you end your turn. Never launch a
+            subagent asynchronously and end your turn assuming you will be
+            "notified when it finishes" or resumed afterward. That behaviour is
+            for an interactive session; here it means the subagent runs into
+            the void and nothing after it ever executes. If your subagent tool
+            offers a background or async mode, do not use it in this workflow.
+            Confirm completion the same way a human would: check that the
+            files the subagent was supposed to write are actually present with
+            Read or ls before moving on or finishing.
             TOKEN BUDGET. Every run here costs the owner's subscription.
             Read only the files you actually need, and read a slice rather
             than a whole file where a slice answers the question. Do not
@@ -852,6 +901,18 @@ jobs:
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
+            THIS IS A ONE-SHOT, NON-INTERACTIVE RUN. There is no later turn: when
+            this job's steps finish, the container is gone. If you invoke a
+            subagent, you must wait for it to actually complete and its files
+            to actually exist on disk BEFORE you end your turn. Never launch a
+            subagent asynchronously and end your turn assuming you will be
+            "notified when it finishes" or resumed afterward. That behaviour is
+            for an interactive session; here it means the subagent runs into
+            the void and nothing after it ever executes. If your subagent tool
+            offers a background or async mode, do not use it in this workflow.
+            Confirm completion the same way a human would: check that the
+            files the subagent was supposed to write are actually present with
+            Read or ls before moving on or finishing.
             TOKEN BUDGET. Every run here costs the owner's subscription.
             Read only the files you actually need, and read a slice rather
             than a whole file where a slice answers the question. Do not

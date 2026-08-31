@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-08-31
+
+### Fixed
+
+- **The audit agent dispatched seo-planner asynchronously and ended its turn
+  waiting to be "notified when it finishes".** A GitHub Actions job is
+  one-shot: when the steps end, the container is gone, and there is no later
+  turn for a notification to arrive in. The subagent ran into the void and its
+  files were never written, while the outer agent reported success because
+  nothing in its own turn had errored. Diagnosed with `show_full_output: true`
+  for one run, which is otherwise hidden by default.
+  Every agent prompt now states plainly that this is a one-shot,
+  non-interactive run with no continuation, forbids asynchronous or background
+  subagent dispatch, and requires confirming a subagent's output files exist on
+  disk before proceeding. The planner invocation specifically now says to wait
+  for it and verify its four files with Read or ls before moving on.
+
 ## [1.6.0] - 2026-08-31
 
 ### Added
