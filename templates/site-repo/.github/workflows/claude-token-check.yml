@@ -50,9 +50,35 @@ jobs:
         env:
           TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
+      - name: Normalise the Claude token
+        # A secret pasted with a stray leading or trailing space malforms the
+        # auth header. It fails in the least readable way possible: no auth
+        # error, the action installs and initialises fine, then returns
+        # is_error with zero cost and no model call. GitHub masks the token
+        # itself but not the surrounding whitespace, so the giveaway is a value
+        # rendering as " ***" in the action's input dump.
+        #
+        # Trim it, re-register the trimmed value as masked BEFORE it is used so
+        # it can never surface in a log, and say loudly if trimming changed
+        # anything so the secret gets fixed at source rather than papered over.
+        env:
+          RAW: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -uo pipefail
+          TRIMMED="$(printf '%s' "$RAW" | tr -d '[:space:]')"
+          echo "::add-mask::$TRIMMED"
+          echo "CLAUDE_TOKEN=$TRIMMED" >> "$GITHUB_ENV"
+          if [ "${#TRIMMED}" -ne "${#RAW}" ]; then
+            echo "::warning::CLAUDE_CODE_OAUTH_TOKEN contained $(( ${#RAW} - ${#TRIMMED} )) whitespace character(s), which have been stripped for this run. Re-paste the secret without them: Settings, Secrets and variables, Actions."
+          fi
+          if [ -z "$TRIMMED" ]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is empty or whitespace only."
+            exit 1
+          fi
+
       - uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           prompt: "Reply with exactly: TOKEN OK"
           claude_args: |
             --max-turns 2

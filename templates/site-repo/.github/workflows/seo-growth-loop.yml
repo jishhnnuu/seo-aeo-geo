@@ -223,9 +223,55 @@ jobs:
         with:
           fetch-depth: 1
           token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
+      - name: Install the plugin's Python runtime
+        # The plugin's bundled scripts are what an audit actually runs, and they
+        # need their dependencies present. claude-code-action installs the
+        # plugin's files but not a Python environment for them, and a fresh
+        # runner has neither, so every `claude-seo run ...` call fails and the
+        # agent burns its turns discovering that. Install the pinned release's
+        # requirements up front, and make the scripts importable directly so a
+        # missing launcher shim is not fatal.
+        run: |
+          set -uo pipefail
+          TAG="v1.6.0"
+          curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
+            "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
+          if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
+            python3 -m pip install --quiet -r "${RUNNER_TEMP}/requirements.txt" \
+              || echo "::warning::Some plugin dependencies failed to install. The audit will degrade to whatever still works rather than stopping."
+          else
+            echo "::warning::Could not fetch the plugin requirements for ${TAG}. Bundled scripts may be unavailable this run."
+          fi
+
+      - name: Normalise the Claude token
+        # A secret pasted with a stray leading or trailing space malforms the
+        # auth header. It fails in the least readable way possible: no auth
+        # error, the action installs and initialises fine, then returns
+        # is_error with zero cost and no model call. GitHub masks the token
+        # itself but not the surrounding whitespace, so the giveaway is a value
+        # rendering as " ***" in the action's input dump.
+        #
+        # Trim it, re-register the trimmed value as masked BEFORE it is used so
+        # it can never surface in a log, and say loudly if trimming changed
+        # anything so the secret gets fixed at source rather than papered over.
+        env:
+          RAW: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -uo pipefail
+          TRIMMED="$(printf '%s' "$RAW" | tr -d '[:space:]')"
+          echo "::add-mask::$TRIMMED"
+          echo "CLAUDE_TOKEN=$TRIMMED" >> "$GITHUB_ENV"
+          if [ "${#TRIMMED}" -ne "${#RAW}" ]; then
+            echo "::warning::CLAUDE_CODE_OAUTH_TOKEN contained $(( ${#RAW} - ${#TRIMMED} )) whitespace character(s), which have been stripped for this run. Re-paste the secret without them: Settings, Secrets and variables, Actions."
+          fi
+          if [ -z "$TRIMMED" ]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is empty or whitespace only."
+            exit 1
+          fi
+
       - uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
@@ -234,8 +280,13 @@ jobs:
             than a whole file where a slice answers the question. Do not
             re-read a file you have already read this run. Prefer grep over
             opening files to search. Do not restate your plan or narrate
-            progress. Keep every report you write under 400 words. Stop as
-            soon as the job is done rather than looking for extra work.
+            progress. Keep every report you write under 400 words. Do not
+            take on work beyond what this job asks for.
+            Being frugal never means finishing early. This job is complete
+            only when every file named under DEFINITION OF DONE exists and is
+            committed. If you find yourself concluding with nothing written,
+            that is not a cheap run, it is a failed one: hand the reason to
+            seo-resolver and let it work the problem.
 
             First: if the environment variable HAS_GROWTH_LOOP_PAT is not
             "true", the GROWTH_LOOP_PAT secret is missing. That means pull
@@ -296,8 +347,35 @@ jobs:
             The issue is informational, never a blocker — say so in the
             body. If the queue is empty, say so plainly rather than
             leaving stale items. If anything in this run fails, errors, or cannot be completed, do not stop and do not report a bare failure: invoke the seo-resolver agent with the literal error and let it run its full seven-rung ladder. Read reports/RESOLUTIONS.md first so a known fix is reapplied rather than rediscovered, and append any new resolution to it.
+            DEFINITION OF DONE. This job has not finished until all of these
+            exist in the repository and are committed to the default branch:
+            reports/ROADMAP.md, reports/KPI-TRACKER.md,
+            reports/HUMAN-INBOX.md, and reports/AUDIT.md holding the audit
+            findings. Before you finish, run `git log --oneline -1` and
+            `ls reports/` and confirm your commit is there. A run that ends
+            without them has failed even if nothing errored, and the very
+            next step is seo-resolver, not a summary.
           claude_args: |
+            --max-turns 60
             --allowedTools "Bash,Read,Write,Glob,Grep,Task"
+
+      - name: Verify the audit actually produced its reports
+        # The agent can finish cleanly, with no error and no permission denial,
+        # having written nothing. That reported success and looked like a
+        # working loop, which is worse than a failure because it hides. Check
+        # the artifacts rather than the exit code.
+        run: |
+          set -uo pipefail
+          git pull --quiet origin "${GITHUB_REF_NAME}" 2>/dev/null || true
+          MISSING=""
+          for f in reports/ROADMAP.md reports/KPI-TRACKER.md reports/HUMAN-INBOX.md; do
+            [ -f "$f" ] || MISSING="$MISSING $f"
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::The agent completed without producing:$MISSING. A run that writes nothing has failed, whatever it reported. Check the job log for what it did with its turns."
+            exit 1
+          fi
+          echo "Audit produced its reports." >> "$GITHUB_STEP_SUMMARY"
 
 
       - name: Explain an agent failure that is really a token failure
@@ -333,9 +411,55 @@ jobs:
         with:
           fetch-depth: 1
           token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
+      - name: Install the plugin's Python runtime
+        # The plugin's bundled scripts are what an audit actually runs, and they
+        # need their dependencies present. claude-code-action installs the
+        # plugin's files but not a Python environment for them, and a fresh
+        # runner has neither, so every `claude-seo run ...` call fails and the
+        # agent burns its turns discovering that. Install the pinned release's
+        # requirements up front, and make the scripts importable directly so a
+        # missing launcher shim is not fatal.
+        run: |
+          set -uo pipefail
+          TAG="v1.6.0"
+          curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
+            "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
+          if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
+            python3 -m pip install --quiet -r "${RUNNER_TEMP}/requirements.txt" \
+              || echo "::warning::Some plugin dependencies failed to install. The audit will degrade to whatever still works rather than stopping."
+          else
+            echo "::warning::Could not fetch the plugin requirements for ${TAG}. Bundled scripts may be unavailable this run."
+          fi
+
+      - name: Normalise the Claude token
+        # A secret pasted with a stray leading or trailing space malforms the
+        # auth header. It fails in the least readable way possible: no auth
+        # error, the action installs and initialises fine, then returns
+        # is_error with zero cost and no model call. GitHub masks the token
+        # itself but not the surrounding whitespace, so the giveaway is a value
+        # rendering as " ***" in the action's input dump.
+        #
+        # Trim it, re-register the trimmed value as masked BEFORE it is used so
+        # it can never surface in a log, and say loudly if trimming changed
+        # anything so the secret gets fixed at source rather than papered over.
+        env:
+          RAW: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -uo pipefail
+          TRIMMED="$(printf '%s' "$RAW" | tr -d '[:space:]')"
+          echo "::add-mask::$TRIMMED"
+          echo "CLAUDE_TOKEN=$TRIMMED" >> "$GITHUB_ENV"
+          if [ "${#TRIMMED}" -ne "${#RAW}" ]; then
+            echo "::warning::CLAUDE_CODE_OAUTH_TOKEN contained $(( ${#RAW} - ${#TRIMMED} )) whitespace character(s), which have been stripped for this run. Re-paste the secret without them: Settings, Secrets and variables, Actions."
+          fi
+          if [ -z "$TRIMMED" ]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is empty or whitespace only."
+            exit 1
+          fi
+
       - uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
@@ -344,8 +468,13 @@ jobs:
             than a whole file where a slice answers the question. Do not
             re-read a file you have already read this run. Prefer grep over
             opening files to search. Do not restate your plan or narrate
-            progress. Keep every report you write under 400 words. Stop as
-            soon as the job is done rather than looking for extra work.
+            progress. Keep every report you write under 400 words. Do not
+            take on work beyond what this job asks for.
+            Being frugal never means finishing early. This job is complete
+            only when every file named under DEFINITION OF DONE exists and is
+            committed. If you find yourself concluding with nothing written,
+            that is not a cheap run, it is a failed one: hand the reason to
+            seo-resolver and let it work the problem.
 
             First, preflight: confirm every credential this run needs
             actually works, by making a real call with each rather than
@@ -438,9 +567,55 @@ jobs:
           fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha }}
           token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
+      - name: Install the plugin's Python runtime
+        # The plugin's bundled scripts are what an audit actually runs, and they
+        # need their dependencies present. claude-code-action installs the
+        # plugin's files but not a Python environment for them, and a fresh
+        # runner has neither, so every `claude-seo run ...` call fails and the
+        # agent burns its turns discovering that. Install the pinned release's
+        # requirements up front, and make the scripts importable directly so a
+        # missing launcher shim is not fatal.
+        run: |
+          set -uo pipefail
+          TAG="v1.6.0"
+          curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
+            "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
+          if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
+            python3 -m pip install --quiet -r "${RUNNER_TEMP}/requirements.txt" \
+              || echo "::warning::Some plugin dependencies failed to install. The audit will degrade to whatever still works rather than stopping."
+          else
+            echo "::warning::Could not fetch the plugin requirements for ${TAG}. Bundled scripts may be unavailable this run."
+          fi
+
+      - name: Normalise the Claude token
+        # A secret pasted with a stray leading or trailing space malforms the
+        # auth header. It fails in the least readable way possible: no auth
+        # error, the action installs and initialises fine, then returns
+        # is_error with zero cost and no model call. GitHub masks the token
+        # itself but not the surrounding whitespace, so the giveaway is a value
+        # rendering as " ***" in the action's input dump.
+        #
+        # Trim it, re-register the trimmed value as masked BEFORE it is used so
+        # it can never surface in a log, and say loudly if trimming changed
+        # anything so the secret gets fixed at source rather than papered over.
+        env:
+          RAW: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -uo pipefail
+          TRIMMED="$(printf '%s' "$RAW" | tr -d '[:space:]')"
+          echo "::add-mask::$TRIMMED"
+          echo "CLAUDE_TOKEN=$TRIMMED" >> "$GITHUB_ENV"
+          if [ "${#TRIMMED}" -ne "${#RAW}" ]; then
+            echo "::warning::CLAUDE_CODE_OAUTH_TOKEN contained $(( ${#RAW} - ${#TRIMMED} )) whitespace character(s), which have been stripped for this run. Re-paste the secret without them: Settings, Secrets and variables, Actions."
+          fi
+          if [ -z "$TRIMMED" ]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is empty or whitespace only."
+            exit 1
+          fi
+
       - uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
@@ -449,8 +624,13 @@ jobs:
             than a whole file where a slice answers the question. Do not
             re-read a file you have already read this run. Prefer grep over
             opening files to search. Do not restate your plan or narrate
-            progress. Keep every report you write under 400 words. Stop as
-            soon as the job is done rather than looking for extra work.
+            progress. Keep every report you write under 400 words. Do not
+            take on work beyond what this job asks for.
+            Being frugal never means finishing early. This job is complete
+            only when every file named under DEFINITION OF DONE exists and is
+            committed. If you find yourself concluding with nothing written,
+            that is not a cheap run, it is a failed one: hand the reason to
+            seo-resolver and let it work the problem.
 
             Run the seo-tester agent's full pre-publish gate against this
             branch's changes. If seo-config.yml sets site.netlify_site_name,
@@ -505,9 +685,55 @@ jobs:
         with:
           fetch-depth: 1
           token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
+      - name: Install the plugin's Python runtime
+        # The plugin's bundled scripts are what an audit actually runs, and they
+        # need their dependencies present. claude-code-action installs the
+        # plugin's files but not a Python environment for them, and a fresh
+        # runner has neither, so every `claude-seo run ...` call fails and the
+        # agent burns its turns discovering that. Install the pinned release's
+        # requirements up front, and make the scripts importable directly so a
+        # missing launcher shim is not fatal.
+        run: |
+          set -uo pipefail
+          TAG="v1.6.0"
+          curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
+            "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
+          if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
+            python3 -m pip install --quiet -r "${RUNNER_TEMP}/requirements.txt" \
+              || echo "::warning::Some plugin dependencies failed to install. The audit will degrade to whatever still works rather than stopping."
+          else
+            echo "::warning::Could not fetch the plugin requirements for ${TAG}. Bundled scripts may be unavailable this run."
+          fi
+
+      - name: Normalise the Claude token
+        # A secret pasted with a stray leading or trailing space malforms the
+        # auth header. It fails in the least readable way possible: no auth
+        # error, the action installs and initialises fine, then returns
+        # is_error with zero cost and no model call. GitHub masks the token
+        # itself but not the surrounding whitespace, so the giveaway is a value
+        # rendering as " ***" in the action's input dump.
+        #
+        # Trim it, re-register the trimmed value as masked BEFORE it is used so
+        # it can never surface in a log, and say loudly if trimming changed
+        # anything so the secret gets fixed at source rather than papered over.
+        env:
+          RAW: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -uo pipefail
+          TRIMMED="$(printf '%s' "$RAW" | tr -d '[:space:]')"
+          echo "::add-mask::$TRIMMED"
+          echo "CLAUDE_TOKEN=$TRIMMED" >> "$GITHUB_ENV"
+          if [ "${#TRIMMED}" -ne "${#RAW}" ]; then
+            echo "::warning::CLAUDE_CODE_OAUTH_TOKEN contained $(( ${#RAW} - ${#TRIMMED} )) whitespace character(s), which have been stripped for this run. Re-paste the secret without them: Settings, Secrets and variables, Actions."
+          fi
+          if [ -z "$TRIMMED" ]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is empty or whitespace only."
+            exit 1
+          fi
+
       - uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
@@ -516,8 +742,13 @@ jobs:
             than a whole file where a slice answers the question. Do not
             re-read a file you have already read this run. Prefer grep over
             opening files to search. Do not restate your plan or narrate
-            progress. Keep every report you write under 400 words. Stop as
-            soon as the job is done rather than looking for extra work.
+            progress. Keep every report you write under 400 words. Do not
+            take on work beyond what this job asks for.
+            Being frugal never means finishing early. This job is complete
+            only when every file named under DEFINITION OF DONE exists and is
+            committed. If you find yourself concluding with nothing written,
+            that is not a cheap run, it is a failed one: hand the reason to
+            seo-resolver and let it work the problem.
 
             Read reports/PUBLISH-LOG.md for anything published since the
             last distribute run. For each new/changed URL, confirm IndexNow
@@ -565,9 +796,55 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.GROWTH_LOOP_PAT || github.token }}
 
+      - name: Install the plugin's Python runtime
+        # The plugin's bundled scripts are what an audit actually runs, and they
+        # need their dependencies present. claude-code-action installs the
+        # plugin's files but not a Python environment for them, and a fresh
+        # runner has neither, so every `claude-seo run ...` call fails and the
+        # agent burns its turns discovering that. Install the pinned release's
+        # requirements up front, and make the scripts importable directly so a
+        # missing launcher shim is not fatal.
+        run: |
+          set -uo pipefail
+          TAG="v1.6.0"
+          curl -fsSL -o "${RUNNER_TEMP}/requirements.txt" \
+            "https://raw.githubusercontent.com/jishhnnuu/seo-aeo-geo/${TAG}/requirements.txt" || true
+          if [ -s "${RUNNER_TEMP}/requirements.txt" ]; then
+            python3 -m pip install --quiet -r "${RUNNER_TEMP}/requirements.txt" \
+              || echo "::warning::Some plugin dependencies failed to install. The audit will degrade to whatever still works rather than stopping."
+          else
+            echo "::warning::Could not fetch the plugin requirements for ${TAG}. Bundled scripts may be unavailable this run."
+          fi
+
+      - name: Normalise the Claude token
+        # A secret pasted with a stray leading or trailing space malforms the
+        # auth header. It fails in the least readable way possible: no auth
+        # error, the action installs and initialises fine, then returns
+        # is_error with zero cost and no model call. GitHub masks the token
+        # itself but not the surrounding whitespace, so the giveaway is a value
+        # rendering as " ***" in the action's input dump.
+        #
+        # Trim it, re-register the trimmed value as masked BEFORE it is used so
+        # it can never surface in a log, and say loudly if trimming changed
+        # anything so the secret gets fixed at source rather than papered over.
+        env:
+          RAW: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -uo pipefail
+          TRIMMED="$(printf '%s' "$RAW" | tr -d '[:space:]')"
+          echo "::add-mask::$TRIMMED"
+          echo "CLAUDE_TOKEN=$TRIMMED" >> "$GITHUB_ENV"
+          if [ "${#TRIMMED}" -ne "${#RAW}" ]; then
+            echo "::warning::CLAUDE_CODE_OAUTH_TOKEN contained $(( ${#RAW} - ${#TRIMMED} )) whitespace character(s), which have been stripped for this run. Re-paste the secret without them: Settings, Secrets and variables, Actions."
+          fi
+          if [ -z "$TRIMMED" ]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is empty or whitespace only."
+            exit 1
+          fi
+
       - uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ env.CLAUDE_TOKEN }}
           plugin_marketplaces: "https://github.com/jishhnnuu/seo-aeo-geo.git"
           plugins: "claude-seo-unified@jishnu-seo-aeo-geo"
           prompt: >
@@ -576,8 +853,13 @@ jobs:
             than a whole file where a slice answers the question. Do not
             re-read a file you have already read this run. Prefer grep over
             opening files to search. Do not restate your plan or narrate
-            progress. Keep every report you write under 400 words. Stop as
-            soon as the job is done rather than looking for extra work.
+            progress. Keep every report you write under 400 words. Do not
+            take on work beyond what this job asks for.
+            Being frugal never means finishing early. This job is complete
+            only when every file named under DEFINITION OF DONE exists and is
+            committed. If you find yourself concluding with nothing written,
+            that is not a cheap run, it is a failed one: hand the reason to
+            seo-resolver and let it work the problem.
 
             Write reports/WEEKLY-REPORT.md — the one thing the site owner
             actually reads. Assume they have not opened the repo all week and
