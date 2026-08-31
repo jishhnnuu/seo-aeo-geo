@@ -388,8 +388,8 @@ jobs:
           # zero cost and an empty modelUsage. Without this step the operator
           # sees only "Claude execution failed" and reasonably starts debugging
           # the prompt or the plugin, neither of which is at fault.
-          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
-                           && grep -q '"modelUsage": *{}' "$OUT"; then
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" 2>/dev/null \
+                           && grep -q '"modelUsage": *{}' "$OUT" 2>/dev/null; then
             echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
             {
               echo "## This looks like a token failure, not a loop failure"
@@ -400,6 +400,7 @@ jobs:
               echo "CLAUDE_CODE_OAUTH_TOKEN secret."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+          exit 0
   # ---- Tue/Thu: fixer + content agents, opens a PR. Never pushes to main directly. ----
   build:
     needs: preflight
@@ -541,8 +542,8 @@ jobs:
           # zero cost and an empty modelUsage. Without this step the operator
           # sees only "Claude execution failed" and reasonably starts debugging
           # the prompt or the plugin, neither of which is at fault.
-          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
-                           && grep -q '"modelUsage": *{}' "$OUT"; then
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" 2>/dev/null \
+                           && grep -q '"modelUsage": *{}' "$OUT" 2>/dev/null; then
             echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
             {
               echo "## This looks like a token failure, not a loop failure"
@@ -553,6 +554,7 @@ jobs:
               echo "CLAUDE_CODE_OAUTH_TOKEN secret."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+          exit 0
   # ---- Any PR opened by the build job: test, then publish only if it passes. ----
   test-and-publish:
     needs: preflight
@@ -662,8 +664,8 @@ jobs:
           # zero cost and an empty modelUsage. Without this step the operator
           # sees only "Claude execution failed" and reasonably starts debugging
           # the prompt or the plugin, neither of which is at fault.
-          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
-                           && grep -q '"modelUsage": *{}' "$OUT"; then
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" 2>/dev/null \
+                           && grep -q '"modelUsage": *{}' "$OUT" 2>/dev/null; then
             echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
             {
               echo "## This looks like a token failure, not a loop failure"
@@ -674,6 +676,7 @@ jobs:
               echo "CLAUDE_CODE_OAUTH_TOKEN secret."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+          exit 0
   # ---- Daily: ping IndexNow / Search Console for anything newly live, check for regressions. ----
   distribute:
     needs: preflight
@@ -772,8 +775,8 @@ jobs:
           # zero cost and an empty modelUsage. Without this step the operator
           # sees only "Claude execution failed" and reasonably starts debugging
           # the prompt or the plugin, neither of which is at fault.
-          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
-                           && grep -q '"modelUsage": *{}' "$OUT"; then
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" 2>/dev/null \
+                           && grep -q '"modelUsage": *{}' "$OUT" 2>/dev/null; then
             echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
             {
               echo "## This looks like a token failure, not a loop failure"
@@ -784,6 +787,7 @@ jobs:
               echo "CLAUDE_CODE_OAUTH_TOKEN secret."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+          exit 0
   # ---- Monday, after the audit: assemble and deliver the weekly report. ----
   report:
     needs: preflight
@@ -911,8 +915,8 @@ jobs:
           # zero cost and an empty modelUsage. Without this step the operator
           # sees only "Claude execution failed" and reasonably starts debugging
           # the prompt or the plugin, neither of which is at fault.
-          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" \
-                           && grep -q '"modelUsage": *{}' "$OUT"; then
+          if [ -f "$OUT" ] && grep -q '"total_cost_usd": *0' "$OUT" 2>/dev/null \
+                           && grep -q '"modelUsage": *{}' "$OUT" 2>/dev/null; then
             echo "::error::The agent never made a model call: total_cost_usd 0 and modelUsage empty. This is almost always a CLAUDE_CODE_OAUTH_TOKEN that is set but no longer valid, NOT a problem with the prompt, the plugin or this workflow. Confirm with the 'Claude token check' workflow in this repo, then run 'claude setup-token' locally and update the secret."
             {
               echo "## This looks like a token failure, not a loop failure"
@@ -923,6 +927,7 @@ jobs:
               echo "CLAUDE_CODE_OAUTH_TOKEN secret."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+          exit 0
       - name: Email the report (only if SMTP secrets are set)
         if: env.HAS_SMTP == 'true'
         continue-on-error: true          # a mail failure must never fail the loop
