@@ -22,7 +22,11 @@
 #      thing as an account-level Actions secret, so set them per repo.
 #      (Organization secrets on PRIVATE repos additionally need a Team plan;
 #      on public repos they work on Free.)
-#   3. Turn on branch protection on your deploy branch requiring the
+#   3. If your host checks Git contributors before building (Netlify does),
+#      confirm the committer identity below is one it recognises. A host that
+#      refuses to build is the worst failure mode this loop has: every job
+#      reports success and the live site never changes.
+#   4. Turn on branch protection on your deploy branch requiring the
 #      "test-and-publish" status check to pass before merge
 #      (belt-and-suspenders alongside seo-publisher's own precondition).
 #
@@ -131,6 +135,25 @@ env:
   # `secrets` is not an available context inside a step-level `if`, but `env` is,
   # so the presence test has to be computed here rather than at the step.
   HAS_SMTP: ${{ secrets.SMTP_USERNAME != '' && secrets.REPORT_EMAIL_TO != '' }}
+  # --- WHO THE COMMITS COME FROM ---
+  # git reads these four directly, so setting them once here applies to every
+  # job and to every git call an agent makes, without a config step per job.
+  #
+  # This matters more than it looks. Netlify, Vercel and similar hosts check the
+  # *committer identity* before they will build: Netlify calls an unrecognised
+  # one an "Unrecognized Git contributor" and the deploy sits pending approval,
+  # so the loop reports success while the live site never changes. The default
+  # here is the repository owner's GitHub noreply address, which is tied to
+  # their account and therefore recognised.
+  #
+  # If your host still refuses to build, set GIT_COMMITTER_EMAIL as a repository
+  # secret to the email address on your Git account. That is nearly always
+  # cheaper than adding a bot to the host's contributor list, which on some
+  # plans consumes a paid contributor seat.
+  GIT_AUTHOR_NAME: ${{ secrets.GIT_COMMITTER_NAME || 'SEO Growth Loop' }}
+  GIT_COMMITTER_NAME: ${{ secrets.GIT_COMMITTER_NAME || 'SEO Growth Loop' }}
+  GIT_AUTHOR_EMAIL: ${{ secrets.GIT_COMMITTER_EMAIL || format('{0}@users.noreply.github.com', github.repository_owner) }}
+  GIT_COMMITTER_EMAIL: ${{ secrets.GIT_COMMITTER_EMAIL || format('{0}@users.noreply.github.com', github.repository_owner) }}
   # --- lets the agents use the `gh` CLI (issue sync, PR creation) ---
   # Prefer the PAT: a pull request opened with the built-in GITHUB_TOKEN does
   # not trigger the `on: pull_request` test-and-publish job. See the header.
@@ -161,6 +184,9 @@ jobs:
           MOZ_API_KEY: ${{ secrets.MOZ_API_KEY }}
           BING_WEBMASTER_API_KEY: ${{ secrets.BING_WEBMASTER_API_KEY }}
           HAS_PAT: ${{ secrets.GROWTH_LOOP_PAT != '' }}
+          # inherited from workflow env, named here so the check reads them
+          GIT_COMMITTER_NAME: ${{ env.GIT_COMMITTER_NAME }}
+          GIT_COMMITTER_EMAIL: ${{ env.GIT_COMMITTER_EMAIL }}
         run: |
           set -uo pipefail
           python3 -m pip install --quiet pyyaml google-auth google-api-python-client 2>/dev/null || true

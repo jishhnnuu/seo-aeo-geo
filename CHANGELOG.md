@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-08-30
+
+### Fixed
+
+- **The workflow never set a commit identity**, so commits carried whatever
+  default the runner supplied. Hosts that check the committer before building,
+  Netlify among them, refuse to deploy an unrecognised one: the deploy sits
+  pending approval while every job in the loop reports success and the live site
+  never changes. That is the worst failure this system can have, because nothing
+  in the run looks wrong. `GIT_AUTHOR_*` and `GIT_COMMITTER_*` are now set at
+  workflow level, which git reads directly so it applies to every job and every
+  git call an agent makes. The default is the repository owner's GitHub noreply
+  address, which is tied to their account and therefore recognised; a
+  `GIT_COMMITTER_EMAIL` secret overrides it. This is cheaper than adding a bot
+  to the host's contributor list, which on some plans consumes a paid seat.
+- `preflight_check.py` now reports the commit identity, and flags an empty one
+  as an error, so a silent publish failure is caught before the first run rather
+  than after a cycle of changes that never went live.
+
 ## [1.4.2] - 2026-08-30
 
 ### Security

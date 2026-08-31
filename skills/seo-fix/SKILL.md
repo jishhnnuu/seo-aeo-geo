@@ -13,7 +13,7 @@ allowed-tools: Read, Grep, Glob, Bash, Task
 license: MIT
 metadata:
   category: seo
-  version: "1.4.2"
+  version: "1.5.0"
   provenance: "Ported and adapted from Hainrixz/claude-seo-ai (MIT). See /NOTICE.md."
 ---
 

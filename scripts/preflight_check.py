@@ -142,7 +142,30 @@ def check_pat():
         "and save it as the GROWTH_LOOP_PAT secret.")
 
 
+def check_commit_identity():
+    """A host that refuses to build the committer is a silent publish failure.
+
+    Netlify and similar hosts check the committer before building. When they
+    do not recognise it the deploy sits pending approval, so every job in the
+    loop reports success while the live site never changes. That is the worst
+    failure this system has, because nothing in the run looks wrong.
+    """
+    name = os.environ.get("GIT_COMMITTER_NAME", "").strip()
+    email = os.environ.get("GIT_COMMITTER_EMAIL", "").strip()
+    if not email:
+        return BROKEN, "GIT_COMMITTER_EMAIL is empty", (
+            "Commits would carry whatever identity the runner defaults to. Set it "
+            "in the workflow env, or as a repository secret.")
+    if email.endswith("@users.noreply.github.com"):
+        return WORKING, f"{name} <{email}>", (
+            "This is the owner's GitHub noreply address, which most hosts "
+            "recognise. If your host still refuses to build, set the "
+            "GIT_COMMITTER_EMAIL secret to the address on your Git account.")
+    return WORKING, f"{name} <{email}>", ""
+
+
 CHECKS = [
+    ("Commit identity", check_commit_identity, False),
     ("Publishing (GROWTH_LOOP_PAT)", check_pat, True),
     ("Search Console", check_search_console, False),
     ("Google API key", check_google_api_key, False),
