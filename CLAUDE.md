@@ -4,7 +4,7 @@
 
 This repository contains **Claude SEO**, a Tier 4 Claude Code skill for comprehensive
 SEO analysis across all industries. It follows the Agent Skills open standard and the
-3-layer architecture (directive, orchestration, execution). 28 sub-skills (23 core +
+3-layer architecture (directive, orchestration, execution). 29 sub-skills (24 core +
 1 orchestrator + 1 growth-loop onboarding + 1 framework integration + 2 extension
 mirrors), 27 sub-agents (15 core + 1 framework integration + 2 extension mirrors +
 2 site-wide review agents + 1 confirmed-fix writer + 1 content writer +
@@ -49,6 +49,9 @@ claude-seo/
       SKILL.md
       references/                # API reference files (11 files)
     seo-backlinks/SKILL.md      # Backlink profile analysis
+    seo-linkbuilding/           # Link building campaigns (readiness, prospects, outreach, tracking)
+      SKILL.md
+      references/                # Site readiness, prospect discovery, outreach playbook
     seo-cluster/                 # Semantic topic clustering (v1.9.0, by Lutfiya Miller)
       SKILL.md
       references/                # Clustering methodology, architecture, workflow
@@ -103,6 +106,7 @@ claude-seo/
     bing_webmaster.py            # Bing Webmaster Tools API (registered-site links/comparison)
     commoncrawl_graph.py         # Common Crawl web graph parser (PageRank, in-degree)
     verify_backlinks.py          # Backlink existence verification crawler
+    linkbuilding.py              # Link campaign engine: screen, score, select, approve, draft, track, verify
     pagespeed_check.py           # PSI v5 + CrUX API
     crux_history.py              # CrUX History API (25-week trends)
     gsc_query.py                 # Search Console (queries, pages, sitemaps, sites)
@@ -151,6 +155,7 @@ claude-seo/
     release_sign.py              # SHA-256 manifest generator for release signing
     verify_release.py            # Verify checkout integrity against a release manifest
     mobile_analysis.py           # Mobile rendering analysis (gitignored, dev-only)
+  data/                            # Shared data files (google-updates.json, linkbuilding/ source library and blocklist)
   schema/                          # Schema.org JSON-LD templates
   templates/                       # Per-site Growth Loop template (copied into a website's own repo)
     ONBOARD-A-SITE.md              # Human-facing onboarding walkthrough
@@ -186,6 +191,7 @@ claude-seo/
 | `/seo local <url>` | Local SEO (GBP, citations, reviews) |
 | `/seo maps [command]` | Maps intelligence (geo-grid, GBP audit, competitors) |
 | `/seo backlinks <url>` | Backlink profile analysis |
+| `/seo linkbuilding <url>` | Link building: readiness, ~100 screened prospects (free and paid), approval-gated outreach, tracking |
 | `/seo cluster <seed>` | SERP-based semantic clustering |
 | `/seo sxo <url>` | Search Experience Optimization |
 | `/seo drift baseline\|compare\|history <url>` | SEO drift monitoring |

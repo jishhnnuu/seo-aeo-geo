@@ -1,0 +1,42 @@
+{
+  "_readme": "Screening rules for scripts/linkbuilding.py. Built from four paid guest-post vendor sheets reviewed on 2026-10-17. Entries are judged on what the sheets themselves show (domain name, sample post topic, repeated metrics), not on a crawl of each site. Re-check a domain before relying on a rejection that matters.",
+  "hard_keyword_patterns": [
+    {"id": "gambling", "pattern": "\\b(casino|betting|sportsbook|poker|gambl\\w*|slots?|lottery)\\b|\\bbet(s|ting)?\\b|1win|fastwin", "reason": "gambling content"},
+    {"id": "adult", "pattern": "\\b(porn\\w*|xxx|escort\\w*|nsfw|onlyfans|fetlife|spankbang\\w*)\\b", "reason": "adult content"},
+    {"id": "piracy", "pattern": "\\b(torrent\\w*|123movies|putlocker|fmovies|warez|cracked|mod ?apk|streameast|flixhq|toongod|mangabuddy|kuttymovie\\w*|filmy4wap\\w*|bolly4u|bollly4u|klwap|socolive)\\b|\\broms?\\b", "reason": "piracy or lookalike streaming brand"},
+    {"id": "pharma", "pattern": "\\b(viagra|cialis|payday ?loans?|kratom)\\b", "reason": "pharma or predatory finance spam"}
+  ],
+  "soft_keyword_patterns": [
+    {"id": "content_farm_topics", "pattern": "\\b(shayari|captions?|wallpapers?|ringtones?|whatsapp status|dp|bios?|baby names|funny puns|names? ideas)\\b", "reason": "topic typical of mass guest-post farms"},
+    {"id": "ymyl_off_niche", "pattern": "\\b(crypto\\w*|cbd|forex|binary options|supplements?)\\b", "reason": "high-scrutiny topic; only acceptable if the client is in that niche"}
+  ],
+  "seller_signal_pattern": "guest ?post(ing)? (service|price|package|available)|buy (a )?(backlink|link|guest)|do-?follow (link|guaranteed|backlink)|instant(ly)? (publish|approval|posting)|link insertion|paid post|sponsored post|\\bTAT\\b|turn-?around time|permanent (post|link)s?|responsible for \\d+ months",
+  "fake_edu_suffixes": ["edu.co.bz", "edu.eu.org", "edu.kg"],
+  "fake_edu_domains": ["rutgers.edu.pl", "rice.edu.pl"],
+  "ugc_subdomain_prefixes_on_edu": ["learn", "share", "online", "sites"],
+  "ugc_lms_prefixes": ["canvas", "extcanvas", "m.canvas", "mycourses", "webcampus", "profdev-lms", "cole2", "moodle", "blackboard", "lms"],
+  "domains": [
+    {"domain": "spankbangs.org", "reason": "domain mimics an adult brand", "evidence": "Hamza SEO Agency sheet 1"},
+    {"domain": "fetlife.me.uk", "reason": "domain mimics an adult brand", "evidence": "Hamza SEO Agency sheet 1"},
+    {"domain": "toongod.co.uk", "reason": "piracy brand lookalike", "evidence": "Hamza SEO Agency sheet 1"},
+    {"domain": "thevyvymanga.com", "reason": "manga piracy brand lookalike", "evidence": "Hamza SEO Agency sheet 1"},
+    {"domain": "kuttymoviess.com.in", "reason": "piracy brand lookalike; sample post is slot-machine content; DA/DR identical to 3 unrelated sites", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "filmy4waps.com.in", "reason": "piracy brand lookalike; metrics identical to unrelated sites", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "klwap.com.in", "reason": "piracy brand lookalike; sample post is casino content", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "wbsedcl.com.in", "reason": "metrics identical to unrelated sites; off-topic M&A post on an electricity-utility lookalike", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "bollly4u.com", "reason": "piracy brand lookalike", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "streameast.org.uk", "reason": "streaming piracy brand lookalike", "evidence": "GuestPost Opportunities sheet 1"},
+    {"domain": "mangabuddy.blog", "reason": "manga piracy brand lookalike", "evidence": "GuestPost Opportunities sheet 1"},
+    {"domain": "flixhq.co.uk", "reason": "streaming piracy brand lookalike", "evidence": "Quick Link Building and Hamza SEO Agency sheets"},
+    {"domain": "photoszone.net", "reason": "sample post advertises live-match replay streams", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "cutesafar.com", "reason": "sample post is a betting-site login guide", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "mcdmenumy.com", "reason": "sample post is a casino operator advert", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "ankitshayari.in", "reason": "sample post is about casino betting", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "sbhinter.com", "reason": "sample post is a cricket betting app advert", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "arcarrierpoint.net", "reason": "sample post is a betting app advert", "evidence": "Hamza SEO Agency sheets 1 and 2"},
+    {"domain": "shayariskill.net", "reason": "off-topic content farm (poetry domain publishing real-estate and business posts)", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "selfshayari.com", "reason": "off-topic content farm", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "shayariforest.com", "reason": "off-topic content farm", "evidence": "Hamza SEO Agency sheet 2"},
+    {"domain": "skshayari.com", "reason": "off-topic content farm", "evidence": "Hamza SEO Agency sheet 2"}
+  ]
+}

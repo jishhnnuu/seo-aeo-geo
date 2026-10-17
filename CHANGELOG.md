@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`seo-linkbuilding` skill and `scripts/linkbuilding.py`.** A link-building campaign engine
+  that checks site readiness, builds a screened shortlist of about 100 legitimate prospects
+  (mostly free, some disclosed paid), waits for owner approval, drafts personalised outreach,
+  tracks replies and wins, and re-verifies links at 30, 90 and 180 days. It never sends email
+  and never recommends bought links.
+- **Source library and blocklist** in `data/linkbuilding/`: 78 evergreen sources by industry,
+  a screening blocklist, and a seller-listed domain list built from four paid guest-post
+  vendor sheets. Rejects gambling, adult and piracy lookalikes, fake `.edu` domains,
+  link-seller language, cloned metrics and learning-system user pages.
+- **`--type link-building` in `google_report.py`**, also embedded in `--type full` when link
+  data is present, plus a "Link Prospects" sheet in the XLSX output.
+- `linkbuilding.py` added to the `claude-seo run` allowlist.
+
+### Fixed
+
+- `install.sh` and `install.ps1` now copy `data/`, which scripts resolve relative to
+  `scripts/`. Manual installs previously lacked `data/google-updates.json` for `seo_updates.py`.
+
 ## [1.8.1] - 2026-08-31
 
 ### Fixed

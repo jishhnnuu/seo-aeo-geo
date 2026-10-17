@@ -2052,6 +2052,217 @@ def _build_methodology_footer(domain, timestamp, gsc_warning=""):
     )
 
 
+# ─── Link Building ───────────────────────────────────────────────────────────
+
+_LB_REL_LABEL = {
+    "follow": "Followed", "nofollow": "Nofollow", "sponsored": "Sponsored", "ugc": "UGC",
+    "mixed": "Mixed", "unknown": "Check on listing",
+}
+
+
+def _lb_num(value):
+    """Format a vendor or tool metric for display; blank when unknown."""
+    if value is None or value == "":
+        return "&ndash;"
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return escape(str(value))
+    if v >= 1_000_000:
+        return f"{v / 1_000_000:.1f}M"
+    if v >= 1_000:
+        return f"{v / 1_000:.1f}k"
+    return f"{v:g}"
+
+
+def _lb_prospect_table(rows, paid=False):
+    """Prospect table. Metrics are labelled with where they came from, because vendor numbers are claims."""
+    if not rows:
+        return '  <p><em>None selected for this group.</em></p>\n'
+    head = ("<tr><th>Tier</th><th>Prospect</th><th>Opportunity</th><th>Link</th>"
+            "<th>DR / DA</th><th>Traffic</th><th>Score</th><th>Notes</th></tr>")
+    body = []
+    for r in rows:
+        src = r.get("metrics_source") or ""
+        src_note = f' <span style="color:#94a3b8;">({escape(src)})</span>' if src and (r.get("dr") or r.get("da")) else ""
+        notes = escape(r.get("notes") or "")
+        flags = r.get("flags") or []
+        if flags:
+            notes = (notes + " " if notes else "") + "<em>Check: " + escape("; ".join(f.split(":")[0].replace("_", " ") for f in flags)) + "</em>"
+        body.append(
+            f'      <tr><td>{escape(str(r.get("tier") or ""))}</td>'
+            f'<td><strong>{escape(r.get("name") or r.get("domain") or "")}</strong><br>'
+            f'<span style="color:#64748b;">{escape(r.get("domain") or "")}</span></td>'
+            f'<td>{escape(str(r.get("type") or "").replace("_", " "))}</td>'
+            f'<td>{_LB_REL_LABEL.get(r.get("rel_expected"), escape(str(r.get("rel_expected") or "")))}</td>'
+            f'<td>{_lb_num(r.get("dr"))} / {_lb_num(r.get("da"))}{src_note}</td>'
+            f'<td>{_lb_num(r.get("traffic"))}</td>'
+            f'<td>{_lb_num(r.get("score"))}</td>'
+            f'<td>{notes}</td></tr>'
+        )
+    return f'  <table>\n    <thead>{head}</thead>\n    <tbody>\n' + "\n".join(body) + '\n    </tbody>\n  </table>\n'
+
+
+def _linkbuilding_toc(has_readiness, has_baseline):
+    return [
+        ("Executive Summary", ["Shortlist, mix and honest expectations"]),
+        ("Site Readiness", ["What to change before any outreach"] if has_readiness else ["Not assessed in this run"]),
+        ("Prospect Strategy", ["Mix by tactic", "What screening rejected and why"]),
+        ("Free Prospects", ["Approved-for-review shortlist"]),
+        ("Paid Prospects", ["Disclosed placements and fee-based listings"]),
+        ("Outreach Plan", ["Stages, cadence and rules"]),
+        ("Measurement", ["Baseline and how to tell a link worked" if has_baseline else "How to tell a link worked"]),
+    ]
+
+
+def _build_linkbuilding_sections(domain, timestamp, data, start_num=1):
+    """Return HTML sections for the link-building part of a report. Numbers start at start_num."""
+    lb = data.get("linkbuilding") or {}
+    s = lb.get("summary", {})
+    n = start_num
+    out = []
+
+    # Executive summary
+    cards = [
+        ("sl", str(s.get("shortlist", 0)), "Prospects shortlisted", None),
+        ("fr", str(s.get("free", 0)), "Free", "#2d6a4f"),
+        ("pd", str(s.get("paid", 0)), "Paid (disclosed)", "#d4740e"),
+        ("ta", str(s.get("tier_a", 0)), "Tier A", "#1e3a5f"),
+    ]
+    cards_html = "".join(_metric_card(v, label, color) for _, v, label, color in cards)
+    lo, hi = s.get("expected_links_low", 0), s.get("expected_links_high", 0)
+    out.append(
+        f'\n<div class="section">\n  <div class="section-header"><h2>{n}. Link Building: Executive Summary</h2></div>\n'
+        f'  <p>This section sets out where <strong>{escape(domain)}</strong> can earn legitimate links, in priority order, '
+        f'and what the site needs to change so that outreach works. {s.get("candidates_reviewed", 0)} candidate sources were '
+        f'reviewed; {s.get("rejected_by_screening", 0)} were rejected as unsafe or unsuitable. The remaining shortlist is a '
+        f'proposal for you to approve. Nothing is contacted until you approve it.</p>\n'
+        f'  <div class="four-col">\n{cards_html}  </div>\n'
+        f'  <div class="highlight"><strong>Realistic expectation.</strong> If every shortlisted opportunity were pursued, the '
+        f'planning estimate is roughly <strong>{lo} to {hi} links</strong>. This is a rule-of-thumb range built from typical '
+        f'acceptance rates by tactic, not a promise. It will be replaced by this campaign\'s own reply and win rates after the '
+        f'first 20 to 30 outreach emails.</div>\n'
+    )
+    if s.get("shortlist", 0) < 100:
+        out.append(
+            f'  <div class="critical-box"><strong>Shortlist is below 100.</strong> Fewer prospects cleared the quality bar. '
+            f'The list has not been padded with weak or unsafe sites. More discovery (competitor link gaps, resource pages, '
+            f'unlinked mentions) is needed to fill the remainder.</div>\n'
+        )
+    out.append('</div>\n')
+    n += 1
+
+    # Site readiness
+    rd = lb.get("readiness")
+    out.append(f'\n<div class="section">\n  <div class="section-header"><h2>{n}. Site Readiness</h2></div>\n')
+    if rd:
+        verdict = {"ready": "Ready for outreach", "mostly_ready": "Mostly ready: fix the items below first",
+                   "fix_first": "Fix first: outreach will not convert yet"}.get(rd.get("verdict"), rd.get("verdict", ""))
+        box = "success-box" if rd.get("verdict") == "ready" else "critical-box" if rd.get("verdict") == "fix_first" else "highlight"
+        out.append(f'  <div class="{box}"><strong>{escape(verdict)}</strong> (readiness score {escape(str(rd.get("score")))}/100). '
+                   f'Editors check the site before they link. Anonymous, thin or asset-less sites are skipped.</div>\n')
+        rows = []
+        for c in rd.get("checks", []):
+            st = {"pass": "Pass", "warn": "Improve", "fail": "Fix"}.get(c.get("level"), "")
+            cls = {"pass": "status-pass", "warn": "status-warn", "fail": "status-fail"}.get(c.get("level"), "")
+            rows.append(f'      <tr><td class="{cls}">{st}</td><td>{escape(c.get("label", ""))}</td><td>{escape(c.get("fix", ""))}</td></tr>')
+        out.append('  <table>\n    <thead><tr><th>Status</th><th>Check</th><th>What to change</th></tr></thead>\n    <tbody>\n'
+                   + "\n".join(rows) + '\n    </tbody>\n  </table>\n')
+        ideas = rd.get("asset_ideas") or []
+        if ideas:
+            out.append('  <h3>Linkable assets worth building</h3>\n  <p>People link to things that save them work or give them a fact to cite. Build at least one:</p>\n  <ul>\n'
+                       + "".join(f'    <li>{escape(i)}</li>\n' for i in ideas) + '  </ul>\n')
+    else:
+        out.append('  <p><em>Readiness was not assessed in this run. Run <code>linkbuilding.py readiness</code> against the site '
+                   'before outreach; the result appears here.</em></p>\n')
+    if lb.get("profile_gaps"):
+        out.append('  <div class="highlight"><strong>Profile gaps.</strong> Listings need these fields filled in the campaign profile: '
+                   + escape(", ".join(lb["profile_gaps"])) + '.</div>\n')
+    out.append('</div>\n')
+    n += 1
+
+    # Strategy
+    out.append(f'\n<div class="section">\n  <div class="section-header"><h2>{n}. Prospect Strategy</h2></div>\n')
+    trows = []
+    for t in lb.get("by_type", []):
+        rng = t.get("success_range")
+        rng_txt = f'{int(rng[0] * 100)}% to {int(rng[1] * 100)}%' if rng else "n/a"
+        trows.append(f'      <tr><td>{escape(t["label"])}</td><td>{t["count"]}</td><td>{rng_txt}</td></tr>')
+    out.append('  <h3>Mix by tactic</h3>\n  <table>\n    <thead><tr><th>Tactic</th><th>Prospects</th><th>Typical success rate</th></tr></thead>\n    <tbody>\n'
+               + ("\n".join(trows) or '      <tr><td colspan="3">No prospects selected.</td></tr>') + '\n    </tbody>\n  </table>\n'
+               '  <p style="color:#64748b;">Success rates are industry rules of thumb for planning. Self-serve listings are high because '
+               'you control the submission; email pitches to editors are low because they depend on a stranger\'s decision.</p>\n')
+    rb = lb.get("rejection_breakdown", {})
+    if rb:
+        rrows = "".join(f'      <tr><td>{escape(k.replace("_", " "))}</td><td>{v}</td></tr>\n' for k, v in sorted(rb.items(), key=lambda kv: -kv[1]))
+        out.append('  <h3>What screening rejected and why</h3>\n  <p>These were removed before you saw them. Buying links from sites like these '
+                   'risks a spam classification or a manual action.</p>\n  <table>\n    <thead><tr><th>Reason</th><th>Count</th></tr></thead>\n    <tbody>\n'
+                   + rrows + '    </tbody>\n  </table>\n')
+    out.append('</div>\n')
+    n += 1
+
+    # Free and paid tables
+    out.append(f'\n<div class="section">\n  <div class="section-header"><h2>{n}. Free Prospects</h2></div>\n'
+               '  <p>Ordered by score. Metrics marked vendor-claimed or unverified must be checked in a link index before outreach.</p>\n'
+               + _lb_prospect_table(lb.get("free_prospects", [])) + '</div>\n')
+    n += 1
+    out.append(f'\n<div class="section">\n  <div class="section-header"><h2>{n}. Paid Prospects</h2></div>\n'
+               '  <div class="highlight"><strong>Paid does not mean bought links.</strong> Only disclosed placements and fee-based listings appear here. '
+               'Expect nofollow or sponsored links; their value is brand, referral traffic and being cited by AI answer engines, '
+               'not PageRank. Never ask for an undisclosed dofollow link.</div>\n'
+               + _lb_prospect_table(lb.get("paid_prospects", []), paid=True) + '</div>\n')
+    n += 1
+
+    # Outreach plan
+    stages = [
+        ("1. Qualify", "Read the page, find a named contact with a publicly listed address, confirm the site is live and relevant."),
+        ("2. Approve", "You review the shortlist and approve or reject each prospect. Nothing is drafted for unapproved sites."),
+        ("3. First touch", "A short, specific email that references something on their page and links to one useful asset. No attachments."),
+        ("4. Follow-up", "One reminder after 6 days and a final note after 14. Then stop."),
+        ("5. Close", "At 21 days with no reply, close the prospect. Anyone who declines goes on the suppression list permanently."),
+        ("6. Verify", "Record the live URL. Re-check at 30, 90 and 180 days that the link exists and which rel attribute it carries."),
+    ]
+    out.append(f'\n<div class="section">\n  <div class="section-header"><h2>{n}. Outreach Plan</h2></div>\n'
+               '  <table>\n    <thead><tr><th>Stage</th><th>What happens</th></tr></thead>\n    <tbody>\n'
+               + "".join(f'      <tr><td><strong>{a}</strong></td><td>{escape(b)}</td></tr>\n' for a, b in stages)
+               + '    </tbody>\n  </table>\n'
+               '  <h3>Rules that protect the site</h3>\n  <ul>\n'
+               '    <li>Email only publicly listed business addresses. Never guess an address or use a purchased list.</li>\n'
+               '    <li>Every message names the sender, says who they work for and offers a one-line opt-out.</li>\n'
+               '    <li>Start with 20 to 30 emails, learn from the replies, then widen. Volume before learning wastes the best prospects.</li>\n'
+               '    <li>Do not buy undisclosed dofollow links, join link exchanges or use private blog networks.</li>\n'
+               '  </ul>\n</div>\n')
+    n += 1
+
+    # Measurement
+    base = lb.get("baseline") or {}
+    fn = lb.get("funnel") or {}
+    brow = "".join(f'      <tr><td>{escape(str(k).replace("_", " "))}</td><td>{escape(str(v))}</td></tr>\n'
+                   for k, v in base.items() if k != "captured")
+    out.append(f'\n<div class="section">\n  <div class="section-header"><h2>{n}. Measurement</h2></div>\n')
+    if brow:
+        out.append('  <h3>Baseline</h3>\n  <table>\n    <thead><tr><th>Metric</th><th>Before outreach</th></tr></thead>\n    <tbody>\n' + brow + '    </tbody>\n  </table>\n')
+    else:
+        out.append('  <div class="highlight"><strong>No baseline stored.</strong> Record referring domains, Search Console clicks and impressions '
+                   'for the target pages now (<code>linkbuilding.py baseline</code>). Without it, results cannot be judged.</div>\n')
+    if fn.get("contacted"):
+        out.append(f'  <p>So far: {fn["contacted"]} contacted, reply rate {fn.get("reply_rate")}, win rate {fn.get("win_rate")}, '
+                   f'{fn.get("links_still_live")} links still live.</p>\n')
+    out.append(
+        '  <h3>How to tell a link worked</h3>\n  <table>\n    <thead><tr><th>Level</th><th>Question</th><th>How to check</th></tr></thead>\n    <tbody>\n'
+        '      <tr><td>1. Exists</td><td>Is the link live, on a real page, with the agreed URL and a sensible anchor?</td><td>verify_backlinks.py at 30, 90 and 180 days</td></tr>\n'
+        '      <tr><td>2. Counted</td><td>Do search tools see it and is it followed?</td><td>Search Console Links report, Bing Webmaster, Moz</td></tr>\n'
+        '      <tr><td>3. Moved</td><td>Did the linked page gain impressions, position or clicks?</td><td>Search Console, 4 to 12 weeks before vs after</td></tr>\n'
+        '      <tr><td>4. Paid back</td><td>Did referral traffic or leads arrive?</td><td>GA4 referral source and conversions</td></tr>\n'
+        '    </tbody>\n  </table>\n'
+        '  <p>Judge the batch over a quarter. A single link rarely moves a ranking on its own.</p>\n'
+        '  <h3>Methodology</h3>\n  <p>Each candidate is scored 0 to 100 on relevance (35%), authority (20%), likelihood of acceptance (25%), '
+        'audience (12%) and integrity (8%), less a penalty per risk flag. Nofollow and sponsored links carry half the authority weight. '
+        'Authority and traffic figures from sellers are treated as claims until confirmed in a link index.</p>\n</div>\n'
+    )
+    return out, n
+
+
 # ─── Report Assemblers ───────────────────────────────────────────────────────
 
 def generate_report(report_type, data, domain, output_dir, output_format="pdf"):
@@ -2059,7 +2270,7 @@ def generate_report(report_type, data, domain, output_dir, output_format="pdf"):
     Generate a complete professional PDF/HTML report.
 
     Args:
-        report_type: 'cwv-audit', 'gsc-performance', 'indexation', or 'full'.
+        report_type: 'cwv-audit', 'gsc-performance', 'indexation', 'link-building', or 'full'.
         data: Dictionary with all input data.
         domain: Domain name for the report header.
         output_dir: Directory for output files.
@@ -2238,6 +2449,21 @@ def generate_report(report_type, data, domain, output_dir, output_format="pdf"):
         sections.append(_build_methodology_footer(domain, timestamp))
 
     # ── FULL report ──────────────────────────────────────────────────────────
+    elif report_type == "link-building":
+        lbd = data.get("linkbuilding") or {}
+        lbs = lbd.get("summary", {})
+        sections.append(_build_title_page(
+            domain, "Link Building Plan",
+            "Prospects, Outreach and Measurement",
+            meta_items=[timestamp, f'{lbs.get("shortlist", 0)} prospects shortlisted'],
+        ))
+        toc_entries = _linkbuilding_toc(bool(lbd.get("readiness")), bool(lbd.get("baseline")))
+        toc_sections = [{"num": i + 1, "title": t, "subs": subs} for i, (t, subs) in enumerate(toc_entries)]
+        sections.append(_build_toc(toc_sections))
+        lb_html, _ = _build_linkbuilding_sections(domain, timestamp, data, start_num=1)
+        sections.extend(lb_html)
+        sections.append(_build_methodology_footer(domain, timestamp))
+
     elif report_type == "full":
         psi = data.get("psi", {})
         mobile = psi.get("psi", {}).get("mobile", psi) if isinstance(psi, dict) else {}
@@ -2295,6 +2521,12 @@ def generate_report(report_type, data, domain, output_dir, output_format="pdf"):
                 ],
             })
             sec_num += 1
+        lb_toc_start = sec_num
+        if data.get("linkbuilding"):
+            lb_entries = _linkbuilding_toc(bool(data["linkbuilding"].get("readiness")), bool(data["linkbuilding"].get("baseline")))
+            for lb_title, lb_subs in lb_entries:
+                toc_sections.append({"num": sec_num, "title": lb_title, "subs": lb_subs})
+                sec_num += 1
         if data.get("action_plan"):
             toc_sections.append({
                 "num": sec_num, "title": "Action Plan", "subs": [
@@ -2344,6 +2576,10 @@ def generate_report(report_type, data, domain, output_dir, output_format="pdf"):
             )
             sections.append(idx_html)
             current_sec += 1
+
+        if data.get("linkbuilding"):
+            lb_html, current_sec = _build_linkbuilding_sections(domain, timestamp, data, start_num=current_sec)
+            sections.extend(lb_html)
 
         action_html = _build_audit_action_plan(data, section_num=rec_num)
         if action_html:
@@ -2634,6 +2870,20 @@ def generate_xlsx(data, domain, report_type, output_dir):
         ws4.freeze_panes = "A2"
         _auto_width(ws4)
 
+    if data.get("linkbuilding"):
+        ws_lb = wb.create_sheet("Link Prospects")
+        ws_lb.append(["Group", "Tier", "Score", "Prospect", "Domain", "Tactic", "Cost", "Expected link", "DR", "DA", "Traffic",
+                      "Metrics source", "Status", "Flags", "Notes"])
+        _style_header(ws_lb)
+        for group, key in (("Free", "free_prospects"), ("Paid", "paid_prospects")):
+            for r in data["linkbuilding"].get(key, []):
+                ws_lb.append([group, r.get("tier"), r.get("score"), r.get("name"), r.get("domain"), r.get("type"), r.get("cost"),
+                              r.get("rel_expected"), r.get("dr"), r.get("da"), r.get("traffic"), r.get("metrics_source"),
+                              r.get("status"), "; ".join(r.get("flags") or []), r.get("notes")])
+        ws_lb.auto_filter.ref = f"A1:O{ws_lb.max_row}"
+        ws_lb.freeze_panes = "A2"
+        _auto_width(ws_lb)
+
     # ── Save ──────────────────────────────────────────────────────────────────
     timestamp = datetime.now().strftime("%Y%m%d-%H%M")
     filename = f"Google-SEO-Report-{domain}-{timestamp}.xlsx"
@@ -2650,7 +2900,7 @@ def main():
     )
     parser.add_argument(
         "--type", "-t",
-        choices=["cwv-audit", "gsc-performance", "indexation", "full"],
+        choices=["cwv-audit", "gsc-performance", "indexation", "link-building", "full"],
         required=True,
         help="Report type",
     )

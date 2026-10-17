@@ -3,7 +3,7 @@
 # seo-aeo-geo: an autonomous multi-agent website optimiser for Claude Code
 
 **Takes a website from zero visibility to ranking, and keeps it there — unattended.**
-28 sub-skills and 24 sub-agents cover technical SEO, content quality and E-E-A-T,
+29 sub-skills and 24 sub-agents cover technical SEO, content quality and E-E-A-T,
 schema markup, Core Web Vitals, local and maps intelligence, e-commerce,
 international/hreflang, backlinks, drift monitoring, App Store Optimization, and
 GEO/AEO for AI Overviews, ChatGPT and Perplexity.

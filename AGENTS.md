@@ -7,7 +7,7 @@
 >
 > Claude Code users: see `CLAUDE.md` instead.
 
-An autonomous multi-agent website optimiser: 28 sub-skills and 24 sub-agents
+An autonomous multi-agent website optimiser: 29 sub-skills and 24 sub-agents
 covering technical SEO, content and E-E-A-T, schema, Core Web Vitals, local,
 e-commerce, hreflang, backlinks, drift, ASO and GEO/AEO, plus the five Growth
 Loop agents (see `docs/GROWTH-LOOP.md`). Audit skills are read-only; only
@@ -92,6 +92,7 @@ integration + 2 extension mirrors), and 53 Python execution scripts.
 | `/seo hreflang <url>` | Hreflang/i18n SEO audit, cultural profiles, content parity |
 | `/seo google [cmd] [url]` | Google SEO APIs (GSC, PageSpeed, CrUX, Indexing, GA4) |
 | `/seo backlinks <url>` | Backlink profile analysis |
+| `/seo linkbuilding <url>` | Link building campaign: readiness, screened prospects, approval-gated outreach, tracking |
 | `/seo backlinks setup` | Setup free backlink APIs |
 | `/seo backlinks verify <url>` | Verify known backlinks still exist |
 | `/seo dataforseo [cmd]` | Live SEO data via DataForSEO (extension) |
@@ -165,6 +166,7 @@ skills/                    # 25 sub-skills (auto-discovered)
   seo-hreflang/           # International SEO
   seo-google/             # Google APIs
   seo-backlinks/          # Backlink analysis
+  seo-linkbuilding/       # Link building campaigns
   seo-programmatic/       # Programmatic SEO
   seo-competitor-pages/   # Competitor pages
   seo-flow/               # FLOW framework integration

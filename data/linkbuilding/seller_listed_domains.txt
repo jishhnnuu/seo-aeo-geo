@@ -1,0 +1,60 @@
+# Domains that appeared as inventory in paid guest-post vendor sheets (reviewed 2026-10-17).
+# Being listed here is NOT proof a site is bad: some are real publishers that sell sponsored content.
+# scripts/linkbuilding.py treats them as paid-only: never pitched as earned or free, never counted as
+# organic link wins, always labelled sponsored. Hard-spam domains live in blocklist.json instead.
+techtimes.com gulfnews.com khaleejtimes.com euroweeklynews.com ibtimes.co.uk collegian.com dailyiowan.com thehypemagazine.com
+urbansplatter.com analyticsinsight.net digitalagencynetwork.com exposedmagazine.co.uk derekdemars.com digitalconnectmag.com
+theenterpriseworld.com muddyrivernews.com thesource.com nl.mashable.com goodmenproject.com tech-insider.org psu.com gamedesigning.org
+themountaineer.com techimply.com saasadviser.co bbntimes.com bmmagazine.co.uk travellingforbusiness.co.uk evpowered.co.uk
+propertyportfolioinvestor.co.uk itsupplychain.com idiva.com spacecoastdaily.com resident.com amazingarchitecture.com growhomely.com
+houseyog.com mansionfreak.com opinohome.com urbansfreaks.com rivonhome.com wavydestinations.com wavynashville.com soakdestinations.com
+bizlixo.com arnonescarcare.com abodelook.com statisticsfundamentals.com aijourn.com filmdaily.co businessmodelanalyst.com gaukurinn.is
+londondaily.news finance-monthly.com ceotodaymagazine.com lawyer-monthly.com 2amagazine.com newzimbabwe.com newskarnataka.com
+ourculturemag.com msn.com pctechmag.com markmeets.com bizzbuzz.news thehansindia.com iheart.com indiehackers.com moroccoworldnews.com
+indiacsr.in cuindependent.com gilaherald.com intheplayroom.co.uk abcmoney.co.uk velvetmagazines.com iemrobotics.com thatericalper.com
+jackcooper.com techbombers.co.uk sosoactive.com typehuman.com opencart.com triphippies.com computertechreviews.com highonfilms.com
+punjabnewsexpress.com nerdbot.com fourmagazine.co.uk ecommercefastlane.com addrom.com vnrom.net otechworld.com itechsoul.com
+toolswift.com ourcodeworld.com talkandroid.com thedatascientist.com myliberla.com moranalytics.com rawmags.com intellspot.com
+techwinks.com.in yonkerstimes.com officefinder.com grindsuccess.com holyroodpr.co.uk calbizjournal.com theactionelite.com
+tamaracamerablog.com grammerheist.com deeside.com yourharlow.com downnews.co.uk deadlinenews.co.uk theedinburghreporter.co.uk
+dailybusinessgroup.co.uk yourthurrock.com smallbusinesscoach.org reelsmedia.co.uk baddiehub.org.uk supanet.com voguevocal.com
+padmagazine.co.uk press.farm radarro.com maloriesadventures.com tynmagazine.com elevatedmagazines.com portotheme.com theluxevoyager.com
+americanspcc.org mytunbridgewells.com stageandcinema.com dsnews.co.uk entrepreneursbreak.com secureblitz.com dgmnews.com
+educationforallinindia.com sparxreaders.co.uk luxurylifestyle.com fingerlakes1.com timesdaily.com decaturdaily.com coalvalleynews.com
+williamsondailynews.com waynecountynews.com lincolnjournal.com loganbanner.com thelebanonnews.com herald-dispatch.com wvgazettemail.com
+portsmouth-dailytimes.com clinicspots.com theridgewoodblog.net kentuckycounselingcenter.com securitysenses.com newswatchtv.com newsgram.com
+geekvibesnation.com maryberryrecipes.co.uk travelexperta.com thelandofwanderlust.com northiowatoday.com skopemag.com biblicaltribe.com
+peacequarters.com upscalelivingmag.com parkmagazineny.com pantryexperts.com programgeeks.net redandwhitemagz.com innewstoday.net
+geeksaroundglobe.com betterthisworld.com allinsider.net techepeak.com techicy.com opsmatters.com garyshood.com kulfiy.com gisuser.com
+usawire.com uniindia.com jbsagolf.com europeanbusinessmagazine.com techmagazines.net thetechnotricks.net openpr.com digitaljournal.com
+benzinga.com barchart.com apnews.com streetinsider.com markets.businessinsider.com ultraupdates.com theglobeandmail.com bignewsnetwork.com
+kidsworldfun.com upbeatgeek.com propertycostarica.co.uk masonjarbreakfast.com psychreg.org wellbeingmagazine.com sugermint.com
+yourhealthmagazine.net scholarshub.net steelcurtainnetwork.com ocnjdaily.com breakingac.com northpennnow.com fansfirstsports.com
+journalismonline.com lakelandcurrents.com downbeach.com somerspoint.com seaislenews.com metapress.com findarticles.com thisdaylive.com
+dailytrust.com kahawatungu.com coruzant.com thebossmagazine.com imei.info hardreset.info kreafolk.com leadgenapp.io azbigmedia.com
+saferloop.com thecuriouslycreative.com signalscv.com iemlabs.com meredithplays.com mothersalwaysright.com copenhagenfashionsummit.com
+fashionweekonline.com gigwise.com reveriepage.com 1883magazine.com stylevanity.com fashionisk.com
+eveningchronicle.uk animalgator.com phub.uk laprogressive.com businesstomark.com husbandname.org kcrealestatemagazine.com
+techdailytimes.com ranktracker.com mwwire.com americanworthy.com thewandererindia.com routergenius.com techcrazeblog.com baddiehuh.co.uk
+skelabs.com theskyearth.com mynewsdesk.com namesbluff.com developergang.com thepinnaclelist.com thesun.blog techktimes.co.uk
+newsdipper.co.uk blogbuz.co.uk thebaddiehub.uk timebusinesswork.com usatimemagazine.co.uk dailybulls.in instabioideas.net savedp.com
+solutionhow.com suggestnotes.com allcollectivenouns.com hindidp.org nshindi.org menuprecio.com ishowbizztoday.com cutedp.org
+talkssmartly.com visitinghub.org englishrecaps.com techplusproduct.com flixpress.com coyyn.org lookatnews.co.uk yooooga.com mitmunk.com
+simplysseven.co.uk webtechmantra.com wheon.com psbios.com kayo-anime.in businessoutstanders.com ytrishi.org sarkarisangam.net
+techgues.org netwyman-blogs.com flowerdrawing.net speromagazine.com technotraps.com easybib.co.uk matingpress.org uploadarticles.com
+coopermagazine.co.uk imocan.com techbullion.com itsreleased.co.uk bigwritehook.co.uk ventsmagazine.co.uk influencersgonewild.co.uk
+earntuffer.com bartowfirst.com unsentproject.net helinika.com thenewordermagazine.com techblaster.co.uk blogstrove.com nazthrift.com
+tensemagazine.com newsprovider.co.uk moralstory.org elamatters.com hackerella.com hooyam.com gomyfinance.org timestech.co.uk
+savvydispatches.com imagesplatform.com westernbusiness.co.uk mybeautifuladventures.com justweighingstuff.com fungroupsnames.com
+rizzlineshub.com namesspark.com nnaleb.com blogmagazines.co.uk sfmcompile.co.uk gmru.co.uk roastmedia.co.uk av-tub.com vistamagazine.com
+stephilareine.com timelymagazine.co.uk politic365.com jotscroll.com slendergame.com insidecatholic.com androidtutorial.net techwarior.com
+studyguide.org yoodley.com scrapdigest.com saygeeks.com elist10.com 4guysfromrolla.com xomba.com ges2016.org slamxhype.com newsgater.com
+getwox.com gamegavel.com kitchensurfing.com stellarsurvey.com xiaomiui.net meritline.com kafila.org solidsmack.com atebits.com sellaband.com
+valvetime.net pvplive.net baycitizen.org ultraimg.com mybasis.com jt.org jguru.com alltechbuzz.net widgetbox.com d-addicts.com
+pickuplinlove.com lexiquester.com bioscops.com lordofnames.com gracejabbaribio.com trendlandmagazine.com allfunnypuns.com
+educationalbaba.org infobiosphere.com kickyreport.com punnz.com goffaw.com infotopbio.com punnyuniverse.com biblepulze.com betterprayers.com
+onlineinfoes.com photoscollection.in wittyrizz.com photosbull.com phlmenus.org
+autobistrot.com autocarpers.com autoinsurancemaw.info autoistic.com autocarcheapestinsurance.com autocarelectronic.com autocaresblog.com
+autoprofittrader.com autoadviceupdate.com autobikeblog.com autoblogcenter.com autocarbikenews.com hindimeanings.in mitmoradabad.edu.in
+tikli.in indianhealthyrecipe.com ipsnews.net blog.libero.it bloglovin.com mid-day.com dnaindia.com outlookindia.com aninews.in
+moneypip.com bankingsupport.info

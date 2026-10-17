@@ -72,6 +72,12 @@ main() {
         cp -r "${TEMP_DIR}/claude-seo/scripts/"* "${SKILL_DIR}/scripts/"
     fi
 
+    # Copy shared data files (scripts resolve ../data relative to scripts/)
+    if [ -d "${TEMP_DIR}/claude-seo/data" ]; then
+        mkdir -p "${SKILL_DIR}/data"
+        cp -r "${TEMP_DIR}/claude-seo/data/"* "${SKILL_DIR}/data/"
+    fi
+
     # Copy the stable runtime launcher. Manual installs use its explicit path;
     # plugin installs expose the repository bin/ directory automatically.
     if [ -f "${TEMP_DIR}/claude-seo/bin/claude-seo" ]; then

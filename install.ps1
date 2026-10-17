@@ -188,6 +188,14 @@ try {
         Copy-Item -Recurse -Force "$ScriptsPath\*" $SkillScripts
     }
 
+    # Copy shared data files (scripts resolve ..\data relative to scripts\).
+    $DataPath = "$TempDir\data"
+    if (Test-Path $DataPath) {
+        $SkillData = "$SkillDir\data"
+        New-Item -ItemType Directory -Force -Path $SkillData | Out-Null
+        Copy-Item -Recurse -Force "$DataPath\*" $SkillData
+    }
+
     # Copy the stable launcher used by skill and agent instructions.
     $BinPath = Join-Path $TempDir 'bin'
     $SkillBin = Join-Path $SkillDir 'bin'

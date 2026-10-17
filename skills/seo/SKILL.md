@@ -20,7 +20,7 @@ installs expose this command automatically. Repository users run
 launcher path. Never invoke bundled scripts with a bare Python interpreter.
 
 Comprehensive SEO analysis across all industries (SaaS, local services,
-e-commerce, publishers, agencies). Orchestrates 27 sub-skills (23 core + 1 growth-loop onboarding + 1 framework
+e-commerce, publishers, agencies). Orchestrates 28 sub-skills (24 core + 1 growth-loop onboarding + 1 framework
 integration + 2 extension mirrors), 18 audit sub-agents, 2 site-wide
 review agents, 1 confirmed-fix writer, 1 content writer, and 5 growth-loop
 agents. A separate optional Firecrawl
@@ -47,6 +47,7 @@ extension is also installable (see "Optional Extensions" below).
 | `/seo hreflang [url]` | Hreflang/i18n SEO audit and generation |
 | `/seo google [command] [url]` | Google SEO APIs (GSC, PageSpeed, CrUX, Indexing, GA4) |
 | `/seo backlinks <url>` | Backlink profile analysis (free: Moz, Bing, CC; premium: DataForSEO) |
+| `/seo linkbuilding <url> [command]` | Link building campaign: readiness, screened shortlist, approval-gated outreach, tracking, report section |
 | `/seo cluster <seed-keyword>` | SERP-based semantic clustering and content architecture |
 | `/seo sxo <url>` | Search Experience Optimization: page-type analysis, user stories, personas |
 | `/seo drift baseline <url>` | Capture SEO baseline for change monitoring |
@@ -223,7 +224,7 @@ Weighted aggregate of all categories:
 
 ## Sub-Skills
 
-This skill orchestrates 27 sub-skills (23 core + 1 growth-loop onboarding +
+This skill orchestrates 28 sub-skills (24 core + 1 growth-loop onboarding +
 1 framework integration + 2 extension mirrors). The orchestrator itself (`seo`)
 lives in `skills/` too, but does not orchestrate itself, so it is not
 enumerated below.
@@ -255,6 +256,7 @@ enumerated below.
 25. **seo-onboard** -- Growth Loop setup for a website repo (copies the per-site template in, installs credentials as repo secrets, triggers the first audit)
 26. **seo-aso** -- App Store Optimization for App Store / Google Play listings
 27. **seo-fix** -- Opt-in fixer for audit findings: dry-run preview by default, writes only after per-change confirmation
+28. **seo-linkbuilding** -- Link building campaign: site readiness, screened shortlist of legitimate prospects, owner-approved outreach drafts, tracking and link verification
 
 ### Optional Extensions
 
