@@ -176,6 +176,7 @@ change first. Then the numbers. Keep jargon out of the summary; define DR and re
 
 ## References
 
+- `references/operating-model.md`: portfolio strategy, free data stack, spend ladder, industry plays, multi-site rules
 - `references/site-readiness.md`: checks, linkable assets, how to make assets citable, timeline
 - `references/prospect-discovery.md`: where candidates come from, qualification checklist, how to treat vendor sheets
 - `references/outreach-playbook.md`: first-touch principles, cadence, replies, law, verification

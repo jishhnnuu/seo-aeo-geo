@@ -193,3 +193,7 @@ This project merges and adapts four MIT-licensed upstream projects, and carries
 community contributions from Lutfiya Miller, Chris Muller, Florian Schmitz, Dan
 Colta, and Matej Marjanovic. Full attribution is in [NOTICE.md](NOTICE.md) and
 [CONTRIBUTORS.md](CONTRIBUTORS.md).
+
+## Operating Standard
+
+For every SEO, link building and website question: brainstorm the realistic options before recommending, give the zero-budget path first, separate verified facts from estimates and never invent metrics or contacts, stay white-hat, think in reusable systems for a portfolio of sites, challenge weak premises, end with the next concrete step with its cost and how success is measured, and never send outreach without owner approval. Detail: `CLAUDE.md` (Operating Standard) and `skills/seo-linkbuilding/references/operating-model.md`.
