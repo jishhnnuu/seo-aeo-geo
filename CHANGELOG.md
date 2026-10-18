@@ -37,6 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `scripts/site_routine.py` run the whole SEO, AEO, GEO and link-building program in one Claude session per
   website: private state in the site repo's `.seo/`, scheduled-task specs that point at the routine files, and a
   check that the live site does not serve `.seo/`.
+- **Runbooks any model can follow.** `site_routine.py` gains `access` (proves each connection and lists the owner's
+  fixes), `pull` and `analyze` (Search Console data turned into a ranked list of page changes by fixed rules, with an
+  audit-list fallback for thin data), `log-change` and `mark-indexed`, `health` (weekly leading indicators: schedule,
+  access, approvals, sending, reply and bounce rate, pace, shipping, indexing, privacy, trend), `report` (the owner
+  report built from recorded files), `check-page` (pre-ship gate) and `monthly-due`. `linkbuilding.py enrich`
+  records contacts without hand-editing JSON. `templates/site-session/RULES.md` and `OWNER-GUIDE.md` added; every
+  routine rewritten as exact steps with decision tables.
 
 ### Changed
 

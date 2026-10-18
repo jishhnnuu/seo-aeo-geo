@@ -1,14 +1,21 @@
-# Midweek run (Thursday, first 60 days)
+# Midweek run (every Thursday, first 60 days)
 
-A short link-building and indexing run that doubles the outreach rhythm during the first 60 days. Same paths and rules
-as `weekly.md`. Keep it small: no on-site changes unless an indexing problem needs a fix.
+Time budget: about 15 minutes. Read `RULES.md` first and set the names it defines, with `<routine>` = `midweek`.
+No on-site page changes in this run.
 
-1. Append `<date> midweek: started` to `<site>/.seo/runs.md`.
-2. `linkbuilding.py due --campaign <camp>`: draft the follow-ups that are due and refresh the export.
-3. Prepare the next batch from approved prospects (contact, hook, `draft`, `export`). List new prospects that need
-   the owner's approval.
-4. Verify any link the owner logged as won since Monday (`verify`), and check that pages shipped on Monday are indexed
-   (`scripts/gsc_inspect.py`). Queue a request-indexing item for any that are not.
-5. Commit `<site>/.seo/`, push, append `<date> midweek: done`.
-6. Report in under 120 words: follow-ups to send, emails ready, approvals waiting, new links verified, indexing
-   problems, and the "needs you" list with minutes per item.
+1. `python3 $E/scripts/linkbuilding.py due --campaign $C`. For each "send follow-up" line, the follow-up text is
+   already in the prospect's draft; run `export --campaign $C` so the owner has it in the CSV.
+2. Prepare any newly `approved` prospects exactly as in `weekly.md` step 6.2 and 6.3.
+3. For prospects the owner logged as `won` since Monday: `python3 $E/scripts/linkbuilding.py verify --campaign $C`.
+4. Run the indexing check from `weekly.md` step 5 for pages shipped on Monday.
+5. `python3 $E/scripts/site_routine.py health --site-dir $S --date $TODAY`. Note every `red` check.
+6. `python3 $E/scripts/site_routine.py mark-run --site-dir $S --routine midweek --status done --date $TODAY`, then commit and push `$S/.seo/`.
+7. Send the owner, in under 120 words:
+
+```
+<Site>, midweek.
+Send today: <n> follow-ups and <n> new emails (file: <path to outreach-approved.csv>).
+Approve: <n> prospects waiting (run `linkbuilding.py shortlist --campaign <C>` or ask me to list them).
+New links verified: <n>. Pages not yet indexed: <list or "none">.
+Warnings: <each red health check message, or "none">.
+```

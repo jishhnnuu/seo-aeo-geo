@@ -17,6 +17,7 @@ Pipeline (each step is one subcommand, state lives in a campaign directory):
     shortlist   print the shortlist for human review
     approve     the human gate: only approved prospects are drafted or exported
     reject      record a rejection with a reason
+    enrich      record a prospect's public contact and personalization (hook, pages, asset)
     draft       write first-touch and follow-up emails for approved pitch prospects (complete only)
     kit         write the submission kit for approved self-serve listings
     export      write a mail-merge CSV of complete drafts
@@ -655,6 +656,7 @@ def select_shortlist(campaign: Campaign, count: int = 100, free_ratio: float = 0
         take([p for p in free if p not in chosen], count - len(chosen))
     for p in chosen:
         p["status"] = "proposed"
+        p.setdefault("proposed_at", now_iso())
     chosen.sort(key=lambda p: -p["score"])
     lo = sum(campaign_type_range(p, campaign)[0] for p in chosen)
     hi = sum(campaign_type_range(p, campaign)[1] for p in chosen)
@@ -1482,6 +1484,7 @@ def cmd_draft(a):
             continue
         p["draft"] = draft
         p["status"] = "drafted"
+        p["drafted_at"] = now_iso()
         out.append({"id": p["id"], "ready": True, "subject": draft["subject"], "words": draft["word_count"]})
     c.save()
     ready = sum(1 for o in out if o["ready"])
@@ -1656,6 +1659,31 @@ def cmd_scorecard(a):
     emit(a, sc, text)
 
 
+def cmd_enrich(a):
+    """Record contact and personalization for one prospect, so no one edits prospects.json by hand."""
+    c = Campaign(a.campaign)
+    p = c.find(a.id)
+    if a.email and ("@" not in a.email or " " in a.email):
+        raise SystemExit(f"{a.email!r} is not an email address")
+    contact = p.setdefault("contact", {})
+    for key, val in (("name", a.name), ("email", a.email), ("source_url", a.source_url)):
+        if val:
+            contact[key] = val
+    pers = p.setdefault("personalization", {})
+    for key, val in (("hook", a.hook), ("their_page_url", a.their_page), ("broken_url", a.broken_url),
+                     ("asset_url", a.asset_url), ("asset_summary", a.asset_summary), ("relationship", a.relationship)):
+        if val:
+            pers[key] = val
+    if a.topics:
+        pers["topics"] = [t.strip() for t in a.topics.split("|") if t.strip()]
+    if a.no_contact:
+        p.setdefault("events", []).append({"event": "no_contact", "at": now_iso(), "note": a.no_contact})
+    c.save()
+    miss = missing_fields(p, c) if p["type"] in EMAIL_TYPES else []
+    emit(a, {"id": p["id"], "contact": contact, "personalization": pers, "still_missing": miss},
+         f"{p['id']}: updated. " + (f"Still missing: {miss}" if miss else "Ready to draft."))
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="Link-building campaign engine (screen, select, approve, draft, track, verify).")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -1696,6 +1724,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp = add("reject", cmd_reject, "Reject prospects"); camp(sp)
     sp.add_argument("--ids", required=True); sp.add_argument("--reason", default="")
     sp = add("draft", cmd_draft, "Draft emails for approved prospects"); camp(sp)
+    sp = add("enrich", cmd_enrich, "Record a prospect's contact and personalization"); camp(sp)
+    sp.add_argument("--id", required=True); sp.add_argument("--name"); sp.add_argument("--email")
+    sp.add_argument("--source-url", help="page where the email address is printed")
+    sp.add_argument("--hook"); sp.add_argument("--their-page"); sp.add_argument("--broken-url")
+    sp.add_argument("--asset-url"); sp.add_argument("--asset-summary"); sp.add_argument("--relationship")
+    sp.add_argument("--topics", help="two topics separated by |"); sp.add_argument("--no-contact", help="why no public contact was found")
     sp = add("kit", cmd_kit, "Write the self-serve submission kit"); camp(sp)
     sp = add("export", cmd_export, "Write the mail-merge CSV"); camp(sp)
     sp.add_argument("--out")
