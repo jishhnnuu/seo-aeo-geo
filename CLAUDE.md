@@ -109,6 +109,7 @@ claude-seo/
     commoncrawl_graph.py         # Common Crawl web graph parser (PageRank, in-degree)
     verify_backlinks.py          # Backlink existence verification crawler
     linkbuilding.py              # Link campaign engine: screen, score, select, approve, draft, track, verify
+    site_routine.py              # Per-site session: private .seo/ state, scheduled run specs, privacy check
     pagespeed_check.py           # PSI v5 + CrUX API
     crux_history.py              # CrUX History API (25-week trends)
     gsc_query.py                 # Search Console (queries, pages, sitemaps, sites)
@@ -160,6 +161,7 @@ claude-seo/
   data/                            # Shared data files (google-updates.json)
   schema/                          # Schema.org JSON-LD templates
   templates/                       # Per-site Growth Loop template (copied into a website's own repo)
+    site-session/                  # One Claude session per site: SETUP, weekly, midweek, checkpoint routines
     ONBOARD-A-SITE.md              # Human-facing onboarding walkthrough
     site-repo/seo-config.yml       # Business/platform config for a managed site
     site-repo/.github/workflows/seo-growth-loop.yml  # Scheduled loop

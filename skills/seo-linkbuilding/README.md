@@ -20,7 +20,9 @@ the weekly plan and scorecard for any site that already has a campaign.
 | `../../scripts/linkbuilding.py` | The engine. It sits in `scripts/` because `claude-seo run` only executes scripts from there |
 | `../../scripts/google_report.py --type link-building` | The PDF and XLSX report section |
 
-Campaign state for each client is written to `link-campaigns/<domain>/` in the working directory: `campaign.json`,
+In session mode (one Claude session per website, see `templates/site-session/SETUP.md`) the campaign lives in the
+site repo at `.seo/link-building/` and is committed there. Otherwise campaign state is written to
+`link-campaigns/<domain>/` in the working directory: `campaign.json`,
 `prospects.json`, `program.json`, `program.md`, `suppression.txt`, drafts and exports.
 
 ## The client lifecycle in five commands

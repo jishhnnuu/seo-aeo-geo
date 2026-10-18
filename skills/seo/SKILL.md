@@ -163,6 +163,10 @@ Off-page authority is part of every engagement, not an add-on. For any request a
 
 Module: `skills/seo-linkbuilding/` (see its `README.md`).
 
+**Session mode.** When a website repo is attached next to this engine repo, its campaign lives at
+`<site repo>/.seo/link-building` (not `link-campaigns/`), and a new site is set up with
+`templates/site-session/SETUP.md`. Client data never goes into this engine repo, which is public.
+
 ## Synthesis Methodology
 
 Audits are not just findings, they are findings synthesized into a coherent

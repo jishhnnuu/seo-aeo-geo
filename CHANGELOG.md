@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Always on.** The orchestrator and full audits now run the link-building readiness check for every client
   site, and show the weekly plan and scorecard when a campaign exists.
 
+- **Site sessions.** `templates/site-session/` (SETUP, weekly, midweek, checkpoint routines) and
+  `scripts/site_routine.py` run the whole SEO, AEO, GEO and link-building program in one Claude session per
+  website: private state in the site repo's `.seo/`, scheduled-task specs that point at the routine files, and a
+  check that the live site does not serve `.seo/`.
+
 ### Changed
 
 - The link-building module is self-contained in `skills/seo-linkbuilding/` (data moved from
