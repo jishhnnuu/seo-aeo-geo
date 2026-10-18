@@ -11,6 +11,7 @@ Pipeline (each step is one subcommand, state lives in a campaign directory):
     init        create campaign.json (site profile, sender, settings)
     library     add the industry-matched evergreen sources from skills/seo-linkbuilding/data/library.json
     ingest      add prospects from a CSV/JSON export (competitor gap, SERP research, a vendor sheet)
+    gap         competitor link gap: domains linking to 2+ competitors and not the client (any export format)
     check-live  confirm each prospect domain resolves to a real, unparked site (network)
     screen      apply hard disqualifiers, soft flags and a 0-100 score
     select      choose the shortlist (default 100, mostly free, no padding with weak prospects)
@@ -408,13 +409,13 @@ def _first(row: dict, *names):
 def rows_to_prospects(rows: list, *, source: str, default_type: str, default_cost: str) -> list:
     out = []
     for row in rows:
-        dom = _first(row, "domain", "website", "websites", "site", "url", "referring domain", "source domain")
+        dom = _first(row, "domain", "website", "websites", "site", "url", "referring domain", "source domain", "refdomain", "root_domain")
         if not dom:
             continue
         metrics = {
-            "dr": parse_metric(_first(row, "dr", "domain rating")),
-            "da": parse_metric(_first(row, "da", "domain authority")),
-            "traffic": parse_metric(_first(row, "traffic", "organic traffic")),
+            "dr": parse_metric(_first(row, "dr", "domain rating", "domain_rating")),
+            "da": parse_metric(_first(row, "da", "domain authority", "domain_authority")),
+            "traffic": parse_metric(_first(row, "traffic", "organic traffic", "traffic_domain", "org_traffic", "organic_traffic")),
             "spam_score": parse_metric(_first(row, "spam_score", "spam score")),
             "metrics_source": _first(row, "metrics_source") or ("vendor-claimed" if source == "vendor_sheet" else "unverified"),
         }
@@ -1684,6 +1685,58 @@ def cmd_enrich(a):
          f"{p['id']}: updated. " + (f"Still missing: {miss}" if miss else "Ready to draft."))
 
 
+def _domains_in(path: str) -> dict:
+    """Read any JSON or CSV export of referring domains: returns {domain: row}."""
+    if path.lower().endswith(".csv"):
+        with open(path, newline="", encoding="utf-8-sig") as fh:
+            rows = list(csv.DictReader(fh))
+    else:
+        data = load_json(path, {})
+        rows = data
+        if isinstance(data, dict):
+            rows = next((v for v in data.values() if isinstance(v, list) and v and isinstance(v[0], dict)), [])
+    out = {}
+    for r in rows:
+        d = normalize_domain(str(_first(r, "domain", "refdomain", "root_domain", "referring domain", "source domain", "url") or ""))
+        if d:
+            out.setdefault(d, r)
+    return out
+
+
+def link_gap(client_file: str, competitor_files: list, min_shared: int = 2) -> list:
+    """Domains that link to at least `min_shared` competitors and not to the client, best first."""
+    have = set(_domains_in(client_file)) if client_file else set()
+    counts: dict = {}
+    sample: dict = {}
+    for f in competitor_files:
+        for d, r in _domains_in(f).items():
+            counts[d] = counts.get(d, 0) + 1
+            sample.setdefault(d, r)
+    rows = []
+    for d, n in counts.items():
+        if n < min_shared or d in have:
+            continue
+        r = sample[d]
+        rows.append({"domain": d, "competitors_linking": n,
+                     "dr": parse_metric(_first(r, "dr", "domain_rating", "domain rating")),
+                     "traffic": parse_metric(_first(r, "traffic", "traffic_domain", "org_traffic", "organic_traffic")),
+                     "metrics_source": _first(r, "metrics_source") or "ahrefs",
+                     "notes": f"links to {n} of {len(competitor_files)} competitors"})
+    rows.sort(key=lambda x: (-x["competitors_linking"], -(x["dr"] or 0)))
+    return rows
+
+
+def cmd_gap(a):
+    rows = link_gap(a.client, a.competitors, a.min_shared)
+    with open(a.out, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=["domain", "competitors_linking", "dr", "traffic", "metrics_source", "notes"])
+        w.writeheader()
+        w.writerows(rows)
+    emit(a, {"written": a.out, "domains": len(rows), "top": rows[:10]},
+         f"{len(rows)} gap domains (linking to {a.min_shared}+ competitors, not to the client) written to {a.out}. "
+         f"Next: ingest --source competitor_gap --file {a.out}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="Link-building campaign engine (screen, select, approve, draft, track, verify).")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -1709,6 +1762,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--file", required=True)
     sp.add_argument("--source", default="manual", choices=["manual", "competitor_gap", "serp", "mention", "broken", "vendor_sheet"])
     sp.add_argument("--type", default="competitor_gap"); sp.add_argument("--cost", default="free", choices=["free", "paid"])
+    sp = add("gap", cmd_gap, "Competitor link gap from referring-domain exports (Ahrefs, Moz, CSV)")
+    sp.add_argument("--client", help="client's referring domains export"); sp.add_argument("--competitors", nargs="+", required=True)
+    sp.add_argument("--min-shared", type=int, default=2); sp.add_argument("--out", required=True)
     sp = add("check-live", cmd_check_live, "Confirm domains are live and unparked"); camp(sp)
     sp.add_argument("--limit", type=int, default=0); sp.add_argument("--recheck", action="store_true")
     sp = add("screen", cmd_screen, "Apply disqualifiers and scoring"); camp(sp)

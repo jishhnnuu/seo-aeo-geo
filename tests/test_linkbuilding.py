@@ -523,3 +523,22 @@ def test_snapshot_rejects_unknown_metric_and_non_numbers(camp):
 def test_data_lives_in_the_skill_folder():
     assert Path(lb.DATA_DIR).parts[-2:] == ("seo-linkbuilding", "data")
     assert Path(lb.DATA_DIR, "library.json").is_file()
+
+
+def test_link_gap_from_ahrefs_style_exports(tmp_path, camp):
+    def dump(name, domains):
+        p = tmp_path / name
+        p.write_text(json.dumps({"refdomains": [{"domain": d, "domain_rating": dr, "traffic_domain": tr} for d, dr, tr in domains]}), encoding="utf-8")
+        return str(p)
+    client = dump("client.json", [("already.example", 50, 1000)])
+    a = dump("a.json", [("shared.example", 60, 5000), ("already.example", 50, 1000), ("only-a.example", 70, 9000)])
+    b = dump("b.json", [("shared.example", 60, 5000), ("www.Already.example", 50, 1000)])
+    rows = lb.link_gap(client, [a, b], 2)
+    assert [r["domain"] for r in rows] == ["shared.example"]
+    assert rows[0]["dr"] == 60 and rows[0]["traffic"] == 5000 and rows[0]["metrics_source"] == "ahrefs"
+    out = tmp_path / "gap.csv"
+    lb.main(["gap", "--client", client, "--competitors", a, b, "--out", str(out)])
+    lb.main(["ingest", "--campaign", camp.dir, "--file", str(out), "--source", "competitor_gap"])
+    p = lb.Campaign(camp.dir).prospects[0]
+    assert p["domain"] == "shared.example" and p["metrics"]["dr"] == 60 and p["metrics"]["metrics_source"] == "ahrefs"
+    lb.screen_all(lb.Campaign(camp.dir))

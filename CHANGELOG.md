@@ -44,6 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   report built from recorded files), `check-page` (pre-ship gate) and `monthly-due`. `linkbuilding.py enrich`
   records contacts without hand-editing JSON. `templates/site-session/RULES.md` and `OWNER-GUIDE.md` added; every
   routine rewritten as exact steps with decision tables.
+- **One-off Ahrefs harvest.** `templates/site-session/AHREFS-HARVEST.md` lists the calls in value order and where to
+  save them (site repo only), and `linkbuilding.py gap` builds a competitor link gap from any referring-domain export.
+  `ingest` now reads Ahrefs and Moz field names.
 
 ### Changed
 

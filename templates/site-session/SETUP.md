@@ -122,6 +122,9 @@ python3 $E/scripts/linkbuilding.py program --campaign $C --start <next Monday> [
    `$E/skills/seo-linkbuilding/references/prospect-discovery.md` for local directories, associations and local press,
    then `ingest`, `screen` and `select` again. The built-in library is mostly US and global.
 
+If Ahrefs is connected in this session, run `AHREFS-HARVEST.md` now, before step 9; it fills the competitor gap
+and keyword data the weekly runs use.
+
 ## Step 9. Schedule the runs
 
 ```bash
