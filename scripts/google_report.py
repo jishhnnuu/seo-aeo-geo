@@ -2245,6 +2245,12 @@ def _build_linkbuilding_sections(domain, timestamp, data, start_num=1):
     else:
         out.append('  <div class="highlight"><strong>No baseline stored.</strong> Record referring domains, Search Console clicks and impressions '
                    'for the target pages now (<code>linkbuilding.py baseline</code>). Without it, results cannot be judged.</div>\n')
+    prog = lb.get("program") or {}
+    if prog:
+        out.append(f'  <div class="success-box"><strong>Six-month program:</strong> week {prog.get("week")} of {prog.get("weeks")} '
+                   f'({escape(str(prog.get("track", "")))} track), {prog.get("tasks_done")} of {prog.get("tasks_total")} tasks done'
+                   f'{", " + str(prog.get("overdue")) + " overdue" if prog.get("overdue") else ""}. Planning estimate for the '
+                   f'program: {prog.get("expected_links_low")} to {prog.get("expected_links_high")} links.</div>\n')
     if fn.get("contacted"):
         out.append(f'  <p>So far: {fn["contacted"]} contacted, reply rate {fn.get("reply_rate")}, win rate {fn.get("win_rate")}, '
                    f'{fn.get("links_still_live")} links still live.</p>\n')

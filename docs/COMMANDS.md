@@ -366,6 +366,8 @@ outreach, tracks replies and wins, and verifies links stay live. It never sends 
 
 **Examples:**
 ```
+/seo linkbuilding onboard https://example.com
+/seo linkbuilding week example.com
 /seo linkbuilding https://example.com
 /seo linkbuilding plan https://example.com
 /seo linkbuilding prospects https://example.com
@@ -377,6 +379,7 @@ outreach, tracks replies and wins, and verifies links stay live. It never sends 
 ```
 
 **What it produces:**
+- A dated six-month program per client (26 weeks, tasks owned by Claude, you or the client, tailored by industry track)
 - Site readiness score with what to change and which linkable assets to build
 - Screened shortlist with tier, tactic, expected link attribute and metric source
 - Rejection breakdown (gambling, adult, piracy, fake .edu, link sellers, cloned metrics)

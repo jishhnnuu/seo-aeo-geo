@@ -36,6 +36,8 @@ Follow the writing rules in `CLAUDE.md`: no em or en dashes as punctuation, no s
 
 | Command | Does |
 |---------|------|
+| `/seo linkbuilding onboard <url>` | New client: intake, setup, dated six-month program, first approvals |
+| `/seo linkbuilding week <client>` | This week's program tasks and outreach due for one client |
 | `/seo linkbuilding <url>` | Full flow: readiness, shortlist, then stop for approval |
 | `/seo linkbuilding plan <url>` | Readiness and asset plan only |
 | `/seo linkbuilding prospects <url>` | Discovery, screening, shortlist (no drafting) |
@@ -46,6 +48,20 @@ Follow the writing rules in `CLAUDE.md`: no em or en dashes as punctuation, no s
 | `/seo linkbuilding report` | Link Building PDF/XLSX via `google_report.py --type link-building` |
 
 All scripts run through `claude-seo run linkbuilding.py <subcommand> --campaign link-campaigns/<domain>`.
+
+## New client (the default entry point)
+
+When the owner names a new client, run the six-month program in `references/six-month-program.md`: intake (ask
+only what cannot be found on the site), then steps 1 to 6 below, then generate the dated program:
+
+```bash
+claude-seo run linkbuilding.py program --campaign link-campaigns/<domain> --start <YYYY-MM-DD, a Monday>
+claude-seo run linkbuilding.py week --campaign link-campaigns/<domain>     # each week: tasks due plus outreach due
+claude-seo run linkbuilding.py done --campaign link-campaigns/<domain> --ids <task ids>
+```
+
+Hand the owner `program.md`, the readiness verdict and the first shortlist. Every week afterwards, run `week`, do the
+claude tasks, and give the owner a short list of what to approve and send.
 
 ## Workflow
 
@@ -176,6 +192,7 @@ change first. Then the numbers. Keep jargon out of the summary; define DR and re
 
 ## References
 
+- `references/six-month-program.md`: new-client process, 26-week plan, tracks, what compresses and what does not
 - `references/operating-model.md`: portfolio strategy, free data stack, spend ladder, industry plays, multi-site rules
 - `references/site-readiness.md`: checks, linkable assets, how to make assets citable, timeline
 - `references/prospect-discovery.md`: where candidates come from, qualification checklist, how to treat vendor sheets

@@ -27,6 +27,9 @@ Pipeline (each step is one subcommand, state lives in a campaign directory):
     baseline    store before-metrics so results can be judged against them
     report-data write the JSON consumed by `google_report.py --type link-building`
     readiness   audit whether the site is ready to earn links, with what to change
+    program     generate the dated six-month program (tasks by week, owner, industry track)
+    week        show this week's program tasks plus outreach that is due
+    done        mark program tasks complete
 
 Usage:
     python scripts/linkbuilding.py init --campaign link-campaigns/example.com --site https://example.com \\
@@ -933,6 +936,151 @@ def assess_readiness(html: str, url: str, industry: str = "general") -> dict:
 
 
 # --------------------------------------------------------------------------------------
+# Six-month program
+# --------------------------------------------------------------------------------------
+
+PROGRAM_WEEKS = 26
+INDUSTRY_TRACK = {
+    "local_service": "local", "home_services": "local", "real_estate": "local", "hospitality": "local",
+    "retail": "local", "events": "local", "healthcare": "local", "legal": "local",
+    "saas": "saas_b2b", "b2b": "saas_b2b", "agency": "saas_b2b", "fintech": "saas_b2b", "developer": "saas_b2b",
+    "ecommerce": "ecommerce",
+    "publisher": "content", "nonprofit": "content", "education": "content", "general": "content",
+}
+YMYL_INDUSTRIES = {"healthcare", "legal", "finance", "fintech"}
+
+# Planned volume per opportunity type over 26 weeks. Pitches are emails or submissions; expert_quote counts responses.
+TRACK_MIX = {
+    "local": {"local_citation": 40, "review_platform": 4, "partner_page": 25, "unlinked_mention": 15, "resource_page": 40,
+              "digital_pr": 60, "expert_quote": 40, "guest_contribution": 20, "broken_link": 30},
+    "saas_b2b": {"directory_listing": 20, "review_platform": 5, "unlinked_mention": 30, "partner_page": 20, "digital_pr": 120,
+                 "expert_quote": 60, "resource_page": 60, "guest_contribution": 40, "podcast_guest": 30, "broken_link": 40,
+                 "competitor_gap": 60},
+    "ecommerce": {"directory_listing": 10, "review_platform": 3, "partner_page": 30, "unlinked_mention": 20, "digital_pr": 90,
+                  "resource_page": 40, "guest_contribution": 20, "expert_quote": 40, "broken_link": 30, "competitor_gap": 40},
+    "content": {"directory_listing": 10, "partner_page": 25, "unlinked_mention": 25, "digital_pr": 90, "resource_page": 50,
+                "expert_quote": 40, "guest_contribution": 30, "podcast_guest": 20, "broken_link": 40, "competitor_gap": 40},
+}
+TRACK_ASSET = {
+    "local": "local cost or price guide built from real quotes, plus a community resource page",
+    "saas_b2b": "original benchmark built from anonymised product or customer data, plus a free calculator or template",
+    "ecommerce": "original product test or buying guide with your own photos, plus a sales-trend data piece",
+    "content": "original data story or survey with the dataset downloadable",
+}
+
+# (weeks, owner, phase, title, detail, tracks or None for all, ymyl_only)
+PROGRAM_TASKS = [
+    ([1], "claude", "Foundation", "Technical and on-page audit", "Run /seo audit and list the fixes that block indexing, speed or trust.", None, False),
+    ([1], "you", "Foundation", "Collect access and baseline", "Search Console, GA4 and Bing access; record baseline with `linkbuilding.py baseline`.", None, False),
+    ([1], "claude", "Foundation", "Readiness check and asset plan", "Run `readiness`; pick the first linkable asset and write its brief.", None, False),
+    ([1], "client", "Foundation", "Intake call (45 minutes)", "Confirm services, regions, competitors, partners, suppliers, customers and one named expert.", None, False),
+    ([1, 2], "claude", "Foundation", "Profile kit and foundation shortlist", "Run `library`, `screen`, `select`; write the submission kit.", None, False),
+    ([2], "you", "Foundation", "Approve foundation listings and create accounts", "Approve the kit; create the accounts that need phone or email verification.", None, False),
+    ([2], "claude", "Foundation", "Entity signals", "Organization or LocalBusiness schema with sameAs; About and author pages drafted.", None, False),
+    ([2], "client", "Foundation", "Credentials review", "Named expert supplies credentials, licence numbers and bio; compliance check on claims.", None, True),
+    ([2, 3], "you", "Foundation", "Fix the blocking audit items", "Ship the fixes from week 1 (or approve them for seo-fix).", None, False),
+    ([2], "claude", "Foundation", "Local citations", "Google, Bing and Apple listings first, then the industry directories, identical name, address, phone.", ["local"], False),
+    ([2], "claude", "Foundation", "Software and review listings", "Directories and review platforms from the library; ask 5 real customers for reviews.", ["saas_b2b"], False),
+    ([2], "claude", "Foundation", "Supplier and maker map", "List every brand, supplier and maker the store carries; find their stockist pages.", ["ecommerce"], False),
+    ([3], "claude", "Foundation", "Fast-win discovery", "Unlinked mentions, partner, supplier and customer pages, local or industry associations.", None, False),
+    ([3], "you", "Foundation", "Expert-quote platform signups", "Create source profiles on two expert-quote platforms for the named expert.", None, False),
+    ([4], "claude", "Foundation", "First outreach batch (fast wins)", "Draft 15 to 20 pitches to mentions and partners; you approve and send.", None, False),
+    ([4, 5], "claude", "Engine", "Build linkable asset 1", "Draft the asset: {asset}. Client supplies the data.", None, False),
+    ([5], "client", "Engine", "Supply data and review asset 1", "Provide the numbers or quotes; approve the draft for publishing.", None, False),
+    ([6], "you", "Engine", "Publish asset 1", "Publish, index it, link to it from relevant pages and the money pages.", None, False),
+    ([6], "claude", "Engine", "Competitor gap and resource-page discovery", "Pull competitor referring domains and resource pages; ingest, screen, select.", None, False),
+    ([7], "claude", "Engine", "Digital PR wave 1", "Pitch asset 1 to 30 to 40 named writers who cover the topic.", None, False),
+    ([8], "claude", "Engine", "Content cluster around the asset", "Plan 4 supporting pages with /seo cluster and /seo content-brief.", None, False),
+    ([10], "claude", "Engine", "Local press and community", "Sponsorship, event and local news angles from the asset; chamber and association listings.", ["local"], False),
+    ([10], "claude", "Engine", "Integration and partner pages", "Ask every integration and technology partner for a listing or case study.", ["saas_b2b"], False),
+    ([10], "claude", "Engine", "Gift-guide and review editors", "Pitch products to editors who publish guides in the category, with samples where it fits.", ["ecommerce"], False),
+    ([12], "claude", "Engine", "Quarter review and replan", "Compare against baseline; keep winning tactics, drop the rest; refresh the shortlist.", None, False),
+    ([13, 14], "claude", "Scale", "Build linkable asset 2", "Second asset on a different angle; client supplies data.", None, False),
+    ([15], "you", "Scale", "Publish asset 2", "Publish and link internally.", None, False),
+    ([16], "claude", "Scale", "Digital PR wave 2", "Pitch asset 2 to 30 to 40 named writers; include writers who covered asset 1.", None, False),
+    ([17], "claude", "Scale", "Guest contributions and podcasts", "Pitch 2 original articles a month and 4 shows on topics the expert can own.", None, False),
+    ([19], "claude", "Scale", "Broken-link and reclaim sweep", "Fix lost links, redirect dead pages that have links, pitch broken-link replacements.", None, False),
+    ([21, 22], "claude", "Compound", "Refresh asset 1 with new data", "Update the numbers; re-pitch everyone who linked or replied.", None, False),
+    ([23], "claude", "Compound", "Digital PR wave 3", "Pitch the refreshed asset or asset 3 to a new list.", None, False),
+    ([24], "claude", "Compound", "Double down", "Put the remaining weeks into the two tactics with the best win rate.", None, False),
+    ([26], "claude", "Compound", "Six-month report and next plan", "Link Building report, baseline comparison, plan for months 7 to 12.", None, False),
+]
+RECURRING_TASKS = [
+    (range(5, 27), "claude", "Weekly outreach batch", "Prepare about {ppw} approved, personalised pitches plus due follow-ups (`draft`, `export`, `due`)."),
+    (range(5, 27), "you", "Approve and send", "Approve the batch, send from your own mailbox, log sends and replies (about 5 minutes per email)."),
+    (range(3, 27), "claude", "Expert-quote responses", "Draft 2 to 3 responses to relevant journalist requests for the expert to approve."),
+    (range(5, 27, 4), "claude", "Monthly results check", "Verify won links (`verify --due`), funnel status, Search Console movement on linked pages."),
+    (range(8, 27, 4), "claude", "Supporting content", "Brief or draft 2 supporting pages for the cluster and link them to the asset."),
+]
+
+
+def build_program(campaign: Campaign, start: date) -> dict:
+    cfg = campaign.config
+    industry = cfg.get("industry", "general")
+    track = INDUSTRY_TRACK.get(industry, "content")
+    ymyl = industry in YMYL_INDUSTRIES
+    tasks = []
+    types = load_library()["types"]
+    mix = TRACK_MIX[track]
+    pitches = sum(n for t, n in mix.items() if types[t]["mode"] == "email")
+    ppw = round(pitches / 23)
+
+    def add(week, owner, phase, title, detail):
+        tasks.append({"id": f"w{week:02d}-{slug(title)}", "week": week, "date": (start + timedelta(weeks=week - 1)).isoformat(),
+                      "phase": phase, "owner": owner, "title": title, "detail": detail, "done": False})
+
+    for weeks, owner, phase, title, detail, tracks, ymyl_only in PROGRAM_TASKS:
+        if tracks and track not in tracks:
+            continue
+        if ymyl_only and not ymyl:
+            continue
+        for w in weeks:
+            add(w, owner, phase, title, detail.replace("{asset}", TRACK_ASSET[track]))
+    for weeks, owner, title, detail in RECURRING_TASKS:
+        for w in weeks:
+            phase = "Foundation" if w <= 4 else "Engine" if w <= 12 else "Scale" if w <= 20 else "Compound"
+            add(w, owner, phase, title, detail.replace("{ppw}", str(ppw)))
+    tasks.sort(key=lambda t: (t["week"], {"client": 0, "you": 1, "claude": 2}[t["owner"]], t["title"]))
+
+    lo = sum(n * types[t]["success_range"][0] for t, n in mix.items())
+    hi = sum(n * types[t]["success_range"][1] for t, n in mix.items())
+    return {"site": cfg.get("site"), "name": cfg.get("name"), "industry": industry, "track": track, "ymyl": ymyl,
+            "start": start.isoformat(), "end": (start + timedelta(weeks=PROGRAM_WEEKS)).isoformat(), "weeks": PROGRAM_WEEKS,
+            "asset_plan": TRACK_ASSET[track], "planned_volume": mix, "email_pitches": pitches,
+            "pitches_per_week": ppw, "expected_links_low": round(lo), "expected_links_high": round(hi),
+            "estimate_note": "Planning range from typical acceptance rates by tactic, not a promise. Replace with the "
+                             "campaign's own rates after the first 20 to 30 sends.",
+            "tasks": tasks}
+
+
+def program_markdown(prog: dict) -> str:
+    lines = [f"# Six-month link building program: {prog['name']}", "",
+             f"Site: {prog['site']}  ", f"Track: {prog['track']}{' (YMYL rules apply)' if prog['ymyl'] else ''}  ",
+             f"Runs {prog['start']} to {prog['end']}", "",
+             f"**Linkable asset plan:** {prog['asset_plan']}", "",
+             f"**Planned activity:** about {prog['email_pitches']} personalised pitches (about {prog['pitches_per_week']} a week "
+             f"from week 4), plus listings and expert-quote responses.", "",
+             f"**Planning estimate:** {prog['expected_links_low']} to {prog['expected_links_high']} links over six months. "
+             f"{prog['estimate_note']}", "", "Owners: **claude** prepares, **you** approve and send, **client** supplies facts and sign-off.", ""]
+    for phase in ("Foundation", "Engine", "Scale", "Compound"):
+        lines += [f"## {phase}", ""]
+        for t in prog["tasks"]:
+            if t["phase"] != phase:
+                continue
+            mark = "x" if t["done"] else " "
+            lines.append(f"- [{mark}] Week {t['week']} ({t['date']}), **{t['owner']}**: {t['title']}. {t['detail']}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def week_view(prog: dict, today: date) -> dict:
+    start = date.fromisoformat(prog["start"])
+    week = max(1, min(PROGRAM_WEEKS, (today - start).days // 7 + 1))
+    return {"week": week, "tasks": [t for t in prog["tasks"] if t["week"] == week],
+            "overdue": [t for t in prog["tasks"] if t["week"] < week and not t["done"]]}
+
+
+# --------------------------------------------------------------------------------------
 # Reporting
 # --------------------------------------------------------------------------------------
 
@@ -953,6 +1101,17 @@ def row_for_report(p: dict) -> dict:
             "score": p["score"], "tier": p["tier"], "rel_expected": p["rel_expected"], "purpose": p["purpose"],
             "dr": m.get("dr"), "da": m.get("da"), "traffic": m.get("traffic"), "metrics_source": m.get("metrics_source", ""),
             "status": p["status"], "notes": p["notes"], "flags": p["flags"], "effort": p.get("effort")}
+
+
+def _program_summary(campaign: Campaign) -> Optional[dict]:
+    prog = load_json(os.path.join(campaign.dir, "program.json"))
+    if not prog:
+        return None
+    wv = week_view(prog, datetime.now(timezone.utc).date())
+    return {"track": prog["track"], "start": prog["start"], "end": prog["end"], "week": wv["week"], "weeks": prog["weeks"],
+            "tasks_done": sum(1 for t in prog["tasks"] if t["done"]), "tasks_total": len(prog["tasks"]),
+            "overdue": len(wv["overdue"]), "expected_links_low": prog["expected_links_low"],
+            "expected_links_high": prog["expected_links_high"], "asset_plan": prog["asset_plan"]}
 
 
 def build_report_data(campaign: Campaign) -> dict:
@@ -988,6 +1147,7 @@ def build_report_data(campaign: Campaign) -> dict:
         "paid_prospects": [row_for_report(p) for p in short if p["cost"] != "free"],
         "readiness": cfg.get("readiness"), "baseline": cfg.get("baseline"), "funnel": funnel(campaign),
         "profile_gaps": [k for k in ("tagline", "short_description", "long_description", "address", "phone") if not cfg.get("profile", {}).get(k)],
+        "program": _program_summary(campaign),
     }}
 
 
@@ -1239,6 +1399,55 @@ def cmd_readiness(a):
     emit(a, out, text)
 
 
+def cmd_program(a):
+    c = Campaign(a.campaign)
+    path = os.path.join(a.campaign, "program.json")
+    if os.path.exists(path) and not a.force:
+        raise SystemExit("Program exists. Use --force to regenerate (completed-task marks are lost).")
+    prog = build_program(c, parse_day(a.start))
+    save_json(path, prog)
+    md = os.path.join(a.campaign, "program.md")
+    with open(md, "w", encoding="utf-8") as fh:
+        fh.write(program_markdown(prog))
+    emit(a, {k: v for k, v in prog.items() if k != "tasks"} | {"tasks": len(prog["tasks"]), "written": [path, md]},
+         f"Program for {prog['name']}: track {prog['track']}, {len(prog['tasks'])} tasks, {prog['start']} to {prog['end']}. "
+         f"Planning estimate {prog['expected_links_low']} to {prog['expected_links_high']} links. Wrote {md}")
+
+
+def _load_program(a):
+    prog = load_json(os.path.join(a.campaign, "program.json"))
+    if not prog:
+        raise SystemExit("No program yet. Run `program` first.")
+    return prog
+
+
+def cmd_week(a):
+    c = Campaign(a.campaign)
+    prog = _load_program(a)
+    today = parse_day(a.today)
+    wv = week_view(prog, today)
+    wv["outreach_due"] = due_items(c, today)
+    rows = [{"id": t["id"], "owner": t["owner"], "title": t["title"]} for t in wv["tasks"]]
+    text = (f"Week {wv['week']} of {prog['weeks']}\n" + table(rows, ["owner", "title", "id"]) +
+            (f"\nOverdue: {len(wv['overdue'])} tasks" if wv["overdue"] else "") +
+            (f"\nOutreach due: {len(wv['outreach_due'])}" if wv["outreach_due"] else ""))
+    emit(a, wv, text)
+
+
+def cmd_done(a):
+    prog = _load_program(a)
+    ids = set(a.ids.split(","))
+    hit = [t["id"] for t in prog["tasks"] if t["id"] in ids]
+    for t in prog["tasks"]:
+        if t["id"] in ids:
+            t["done"] = True
+    save_json(os.path.join(a.campaign, "program.json"), prog)
+    with open(os.path.join(a.campaign, "program.md"), "w", encoding="utf-8") as fh:
+        fh.write(program_markdown(prog))
+    missing = sorted(ids - set(hit))
+    emit(a, {"done": hit, "unknown": missing}, f"Marked {len(hit)} done." + (f" Unknown ids: {missing}" if missing else ""))
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="Link-building campaign engine (screen, select, approve, draft, track, verify).")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -1295,6 +1504,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("values", nargs="+")
     sp = add("report-data", cmd_report_data, "Write report JSON"); camp(sp)
     sp.add_argument("--out")
+    sp = add("program", cmd_program, "Generate the dated six-month program"); camp(sp)
+    sp.add_argument("--start"); sp.add_argument("--force", action="store_true")
+    sp = add("week", cmd_week, "Tasks and outreach due this week"); camp(sp)
+    sp.add_argument("--today")
+    sp = add("done", cmd_done, "Mark program tasks done"); camp(sp)
+    sp.add_argument("--ids", required=True)
     sp = add("readiness", cmd_readiness, "Audit whether the site can earn links")
     sp.add_argument("--url", required=True); sp.add_argument("--industry", default="general")
     sp.add_argument("--html-file"); sp.add_argument("--campaign")

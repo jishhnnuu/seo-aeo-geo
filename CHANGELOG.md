@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`--type link-building` in `google_report.py`**, also embedded in `--type full` when link
   data is present, plus a "Link Prospects" sheet in the XLSX output.
 - `linkbuilding.py` added to the `claude-seo run` allowlist.
+- **Six-month program.** `linkbuilding.py program`, `week` and `done` generate and run a dated 26-week plan per client,
+  tailored by industry track (local, SaaS and B2B, e-commerce, content) with YMYL additions, and every task owned by
+  Claude, the operator or the client. New reference `six-month-program.md` documents the new-client process and what
+  can and cannot be compressed from a traditional 12-month engagement.
 
 ### Fixed
 

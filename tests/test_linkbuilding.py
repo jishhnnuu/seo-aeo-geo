@@ -402,3 +402,49 @@ def test_learning_system_subdomains_are_flagged_as_user_content(camp, domain):
     add(camp, [{"domain": domain, "dr": "90", "da": "90", "traffic": "2M", "relevance": "0.5"}], source="vendor_sheet")
     lb.screen_all(camp)
     assert any(f.startswith("edu_user_content_subdomain") for f in camp.prospects[0]["flags"])
+
+
+# ---- six-month program ------------------------------------------------------------------
+
+@pytest.mark.parametrize("industry,track", [("saas", "saas_b2b"), ("local_service", "local"), ("ecommerce", "ecommerce"),
+                                            ("nonprofit", "content"), ("unknown-thing", "content")])
+def test_program_track_and_shape(camp, industry, track):
+    camp.config["industry"] = industry
+    prog = lb.build_program(camp, date(2026, 10, 19))
+    assert prog["track"] == track and prog["weeks"] == 26
+    assert prog["end"] == "2027-04-19"
+    weeks = {t["week"] for t in prog["tasks"]}
+    assert weeks == set(range(1, 27)), "every week has work"
+    assert {t["owner"] for t in prog["tasks"]} == {"claude", "you", "client"}
+    assert len({t["id"] for t in prog["tasks"]}) == len(prog["tasks"])
+    assert 0 < prog["expected_links_low"] < prog["expected_links_high"]
+    assert all("{" not in t["detail"] for t in prog["tasks"])
+    assert any(t["title"] == "Six-month report and next plan" and t["week"] == 26 for t in prog["tasks"])
+    batch = next(t for t in prog["tasks"] if t["title"] == "Weekly outreach batch")
+    assert str(prog["pitches_per_week"]) in batch["detail"]
+
+
+def test_program_ymyl_and_track_specific_tasks(camp):
+    camp.config["industry"] = "healthcare"
+    titles = {t["title"] for t in lb.build_program(camp, date(2026, 10, 19))["tasks"]}
+    assert "Credentials review" in titles and "Local citations" in titles and "Software and review listings" not in titles
+    camp.config["industry"] = "saas"
+    titles = {t["title"] for t in lb.build_program(camp, date(2026, 10, 19))["tasks"]}
+    assert "Credentials review" not in titles and "Integration and partner pages" in titles
+
+
+def test_program_cli_week_and_done(camp):
+    lb.main(["program", "--campaign", camp.dir, "--start", "2026-10-19"])
+    prog = json.loads(Path(camp.dir, "program.json").read_text(encoding="utf-8"))
+    assert Path(camp.dir, "program.md").read_text(encoding="utf-8").startswith("# Six-month link building program")
+    wv = lb.week_view(prog, date(2026, 11, 3))
+    assert wv["week"] == 3 and wv["tasks"] and len(wv["overdue"]) > 0
+    first = [t["id"] for t in prog["tasks"] if t["week"] == 1]
+    lb.main(["done", "--campaign", camp.dir, "--ids", ",".join(first)])
+    prog = json.loads(Path(camp.dir, "program.json").read_text(encoding="utf-8"))
+    assert all(t["done"] for t in prog["tasks"] if t["week"] == 1)
+    assert lb.week_view(prog, date(2026, 10, 26))["overdue"] == []
+    with pytest.raises(SystemExit):
+        lb.main(["program", "--campaign", camp.dir])
+    summary = lb.build_report_data(lb.Campaign(camp.dir))["linkbuilding"]["program"]
+    assert summary["tasks_done"] == len(first) and summary["track"] == "saas_b2b"
