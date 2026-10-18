@@ -358,6 +358,37 @@ Backlink profile analysis with a 3-tier data cascade: free (Common Crawl + verif
 
 ---
 
+### `/seo linkbuilding <url> [command]`
+
+Link building campaign. Checks whether the site is ready to earn links, builds a screened shortlist of about 100
+legitimate prospects (mostly free, some disclosed paid), stops for owner approval, then drafts personalised
+outreach, tracks replies and wins, and verifies links stay live. It never sends email and never recommends bought links.
+
+**Examples:**
+```
+/seo linkbuilding onboard https://example.com
+/seo linkbuilding week example.com
+/seo linkbuilding https://example.com
+/seo linkbuilding plan https://example.com
+/seo linkbuilding prospects https://example.com
+/seo linkbuilding approve
+/seo linkbuilding draft
+/seo linkbuilding track
+/seo linkbuilding verify
+/seo linkbuilding report
+```
+
+**What it produces:**
+- A dated six-month program per client (26 weeks, tasks owned by Claude, you or the client, tailored by industry track)
+- Site readiness score with what to change and which linkable assets to build
+- Screened shortlist with tier, tactic, expected link attribute and metric source
+- Rejection breakdown (gambling, adult, piracy, fake .edu, link sellers, cloned metrics)
+- Drafts for approved prospects, a submission kit for self-serve listings, and a mail-merge CSV
+- Follow-up schedule (day 6, 14, 21), suppression list, 30/90/180-day link verification
+- A Link Building section for the PDF/XLSX report (`google_report.py --type link-building`)
+
+---
+
 ### `/seo cluster [command] <seed-keyword>`
 
 SERP-based semantic topic clustering for content architecture planning. Built on the Pro Hub Challenge Semantic Cluster Engine. Subcommands: `plan <seed>` (full planning workflow; also `plan --from strategy` to import a `/seo plan` output), `execute` (create content via claude-blog or output briefs), `map` (regenerate the interactive visualization). Bare `/seo cluster <seed>` is shorthand for `plan`.
@@ -745,6 +776,7 @@ Use this over the built-in audit crawl when the site exceeds the ~500-page cap
 | `/seo local <url>` | Local SEO (GBP, citations, reviews) |
 | `/seo maps [command]` | Maps intelligence (geo-grid, GBP audit, competitors) |
 | `/seo backlinks <url>` | Backlink profile analysis |
+| `/seo linkbuilding <url> [command]` | Link building campaign: readiness, screened shortlist, approval-gated outreach, tracking |
 | `/seo cluster <seed>` | SERP-based semantic clustering |
 | `/seo sxo <url>` | Search Experience Optimization |
 | `/seo drift baseline\|compare\|history <url>` | SEO drift monitoring |

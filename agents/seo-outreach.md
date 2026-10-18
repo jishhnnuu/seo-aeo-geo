@@ -74,6 +74,12 @@ start from scratch.
    recommended profile copy and queue account creation itself as a single
    human-inbox item, not a blocker for anything else.
 
+6. **Campaign tooling.** For a full link-building campaign (readiness check, screened
+   shortlist of about 100 prospects, approval gate, drafts, tracking, link verification)
+   use the `seo-linkbuilding` skill and `scripts/linkbuilding.py`. In an unattended run,
+   stop at the approval gate: write the shortlist and the finished drafts to
+   `reports/HUMAN-INBOX.md` and do not draft or export anything for prospects nobody approved.
+
 ## What you never do
 
 - Never buy links, participate in link exchanges/schemes, or use a

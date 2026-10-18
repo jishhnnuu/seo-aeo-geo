@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`seo-linkbuilding` skill and `scripts/linkbuilding.py`.** A link-building campaign engine
+  that checks site readiness, builds a screened shortlist of about 100 legitimate prospects
+  (mostly free, some disclosed paid), waits for owner approval, drafts personalised outreach,
+  tracks replies and wins, and re-verifies links at 30, 90 and 180 days. It never sends email
+  and never recommends bought links.
+- **Source library and blocklist** in `skills/seo-linkbuilding/data/`: 78 evergreen sources by industry,
+  a screening blocklist, and a seller-listed domain list built from four paid guest-post
+  vendor sheets. Rejects gambling, adult and piracy lookalikes, fake `.edu` domains,
+  link-seller language, cloned metrics and learning-system user pages.
+- **`--type link-building` in `google_report.py`**, also embedded in `--type full` when link
+  data is present, plus a "Link Prospects" sheet in the XLSX output.
+- `linkbuilding.py` added to the `claude-seo run` allowlist.
+- **Six-month program.** `linkbuilding.py program`, `week` and `done` generate and run a dated 26-week plan per client,
+  tailored by industry track (local, SaaS and B2B, e-commerce, content) with YMYL additions, and every task owned by
+  Claude, the operator or the client. New reference `six-month-program.md` documents the new-client process and what
+  can and cannot be compressed from a traditional 12-month engagement.
+- **Fast start.** `program` compresses the foundation weeks when the readiness check passes, and
+  `--existing-asset` starts pitching an existing linkable page in week 2.
+- **Monthly scorecard.** `snapshot` and `scorecard` record visibility each month against the baseline
+  (Search Console, brand search, maps, AI mentions, links) and run pass/fail checks with corrective actions.
+  Shown in the report's Measurement section.
+- **Always on.** The orchestrator and full audits now run the link-building readiness check for every client
+  site, and show the weekly plan and scorecard when a campaign exists.
+
+- **Site sessions.** `templates/site-session/` (SETUP, weekly, midweek, checkpoint routines) and
+  `scripts/site_routine.py` run the whole SEO, AEO, GEO and link-building program in one Claude session per
+  website: private state in the site repo's `.seo/`, scheduled-task specs that point at the routine files, and a
+  check that the live site does not serve `.seo/`.
+- **Runbooks any model can follow.** `site_routine.py` gains `access` (proves each connection and lists the owner's
+  fixes), `pull` and `analyze` (Search Console data turned into a ranked list of page changes by fixed rules, with an
+  audit-list fallback for thin data), `log-change` and `mark-indexed`, `health` (weekly leading indicators: schedule,
+  access, approvals, sending, reply and bounce rate, pace, shipping, indexing, privacy, trend), `report` (the owner
+  report built from recorded files), `check-page` (pre-ship gate) and `monthly-due`. `linkbuilding.py enrich`
+  records contacts without hand-editing JSON. `templates/site-session/RULES.md` and `OWNER-GUIDE.md` added; every
+  routine rewritten as exact steps with decision tables.
+- **One-off Ahrefs harvest.** `templates/site-session/AHREFS-HARVEST.md` lists the calls in value order and where to
+  save them (site repo only), and `linkbuilding.py gap` builds a competitor link gap from any referring-domain export.
+  `ingest` now reads Ahrefs and Moz field names.
+
+### Changed
+
+- The link-building module is self-contained in `skills/seo-linkbuilding/` (data moved from
+  `data/linkbuilding/`, plus a module `README.md`). The engine stays in `scripts/` because
+  `claude-seo run` only executes scripts from there.
+
+### Fixed
+
+- `install.sh` and `install.ps1` now copy `data/`, which scripts resolve relative to
+  `scripts/`. Manual installs previously lacked `data/google-updates.json` for `seo_updates.py`.
+
 ## [1.8.1] - 2026-08-31
 
 ### Fixed

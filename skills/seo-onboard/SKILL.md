@@ -11,6 +11,12 @@ metadata:
 
 # Onboard a website onto the Growth Loop
 
+> **Session mode (recommended for agency use).** If the owner works with one Claude session per website, with the
+> site repo and the engine repo both attached, follow `templates/site-session/SETUP.md` in the engine repo instead of
+> the GitHub Actions setup below. It sets up SEO, AEO, GEO and link building for the site, keeps all client state in
+> the site repo's `.seo/` folder, and schedules the weekly, midweek and checkpoint runs on that session
+> (`scripts/site_routine.py`).
+
 **Invocation:** just say what you want — "optimize this website", "set up
 SEO here", "I want this site ranking". No command needs to be typed or
 remembered. `/seo-onboard <url>` works too if someone prefers it.

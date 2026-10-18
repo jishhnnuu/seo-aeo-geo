@@ -44,6 +44,7 @@ configured.
    - `seo-sxo` -- Search experience analysis: page-type mismatch, user stories, persona scoring (always include in full audits)
    - `seo-drift` -- Drift analysis: compare against stored baseline (spawn when drift baseline exists for the URL via `claude-seo run drift_history.py <url>`)
    - `seo-ecommerce` -- Product schema, marketplace intelligence (spawn when E-commerce industry detected)
+   - `seo-linkbuilding` -- Always, inline: run `claude-seo run linkbuilding.py readiness --url <url> --industry <type>`; if `link-campaigns/<domain>/` exists also run `week` and `scorecard` (see "Link Building Is Always On" in `skills/seo/SKILL.md`)
 5. **Score** -- aggregate into SEO Health Score (0-100)
 6. **Persist audit artifacts** -- write all outputs under `{domain}-audit/`
 7. **Report** -- generate prioritized action plan and optional PDF/HTML report
@@ -167,6 +168,12 @@ Write `{domain}-audit/audit-data.json` with this shape so `claude-seo run google
 - Citability score
 - Structural improvements
 - Authority signals
+
+### Off-Page and Link Building
+- Link-building readiness verdict and score (reported, not part of the Health Score weights)
+- Top three fixes before outreach, and whether a fast start applies
+- Existing campaign: this week's tasks and the latest scorecard checks
+- Offer: start the six-month program with `/seo linkbuilding onboard <url>`
 
 ## Priority Definitions
 

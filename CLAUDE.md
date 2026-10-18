@@ -4,7 +4,7 @@
 
 This repository contains **Claude SEO**, a Tier 4 Claude Code skill for comprehensive
 SEO analysis across all industries. It follows the Agent Skills open standard and the
-3-layer architecture (directive, orchestration, execution). 28 sub-skills (23 core +
+3-layer architecture (directive, orchestration, execution). 29 sub-skills (24 core +
 1 orchestrator + 1 growth-loop onboarding + 1 framework integration + 2 extension
 mirrors), 27 sub-agents (15 core + 1 framework integration + 2 extension mirrors +
 2 site-wide review agents + 1 confirmed-fix writer + 1 content writer +
@@ -49,6 +49,11 @@ claude-seo/
       SKILL.md
       references/                # API reference files (11 files)
     seo-backlinks/SKILL.md      # Backlink profile analysis
+    seo-linkbuilding/           # Link building module (self-contained; engine is scripts/linkbuilding.py)
+      README.md                  # Module map: what lives where, how it activates
+      SKILL.md
+      references/                # Program, operating model, readiness, discovery, outreach, measurement
+      data/                      # Source library, blocklist, seller-listed domains
     seo-cluster/                 # Semantic topic clustering (v1.9.0, by Lutfiya Miller)
       SKILL.md
       references/                # Clustering methodology, architecture, workflow
@@ -103,6 +108,8 @@ claude-seo/
     bing_webmaster.py            # Bing Webmaster Tools API (registered-site links/comparison)
     commoncrawl_graph.py         # Common Crawl web graph parser (PageRank, in-degree)
     verify_backlinks.py          # Backlink existence verification crawler
+    linkbuilding.py              # Link campaign engine: screen, score, select, approve, draft, track, verify
+    site_routine.py              # Per-site session: state, access proof, GSC pull, change ranking, health, report, page gate
     pagespeed_check.py           # PSI v5 + CrUX API
     crux_history.py              # CrUX History API (25-week trends)
     gsc_query.py                 # Search Console (queries, pages, sitemaps, sites)
@@ -151,8 +158,10 @@ claude-seo/
     release_sign.py              # SHA-256 manifest generator for release signing
     verify_release.py            # Verify checkout integrity against a release manifest
     mobile_analysis.py           # Mobile rendering analysis (gitignored, dev-only)
+  data/                            # Shared data files (google-updates.json)
   schema/                          # Schema.org JSON-LD templates
   templates/                       # Per-site Growth Loop template (copied into a website's own repo)
+    site-session/                  # One Claude session per site: RULES, SETUP, weekly, midweek, checkpoint, OWNER-GUIDE
     ONBOARD-A-SITE.md              # Human-facing onboarding walkthrough
     site-repo/seo-config.yml       # Business/platform config for a managed site
     site-repo/.github/workflows/seo-growth-loop.yml  # Scheduled loop
@@ -186,6 +195,7 @@ claude-seo/
 | `/seo local <url>` | Local SEO (GBP, citations, reviews) |
 | `/seo maps [command]` | Maps intelligence (geo-grid, GBP audit, competitors) |
 | `/seo backlinks <url>` | Backlink profile analysis |
+| `/seo linkbuilding <url>` | Link building: readiness, ~100 screened prospects (free and paid), approval-gated outreach, tracking |
 | `/seo cluster <seed>` | SERP-based semantic clustering |
 | `/seo sxo <url>` | Search Experience Optimization |
 | `/seo drift baseline\|compare\|history <url>` | SEO drift monitoring |
@@ -268,6 +278,24 @@ Part of the Claude Code skill family:
 2. **Industry Detection**: Auto-detect SaaS, e-commerce, local, publisher, agency
 3. **Parallel Execution**: Full audits spawn up to 15 subagents simultaneously
 4. **Extension System**: DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, Unlighthouse, and Screaming Frog extensions
+
+## Operating Standard (applies to every SEO, link building and website question)
+
+Answer as a senior specialist with agency-scale experience would. This is a standard of behaviour, not a credential.
+
+1. **Brainstorm before recommending.** Lay out the realistic options, say what each costs in money and hours, then
+   recommend one. Give the zero-budget path first and what spending would change.
+2. **Think in systems.** The user runs many sites, their own and clients'. Prefer reusable assets, shared suppression
+   lists and per-client tailoring over one-off work. Align every plan to the site's industry, geography and stage.
+3. **Evidence over assertion.** Separate what was verified, what is an estimate and what is unknown. Never invent
+   metrics, contacts, success rates or tool capabilities. If a connection or tool fails, say so and say what that limits.
+4. **White-hat only.** No bought dofollow links, link exchanges, private blog networks, fake `.edu` pages or automated
+   forum posting. Flag risk plainly, including when the user's own idea is the risky one.
+5. **Challenge weak premises.** If the plan will not work as described, say so politely and offer the version that will.
+6. **End with the next step.** Name the concrete action, the time and money it needs, and how success will be measured.
+7. **Approval before outreach.** Prepare and propose; the owner decides and sends.
+
+Strategy and operating detail for link building: `skills/seo-linkbuilding/references/operating-model.md`.
 
 ## Repository Topology
 
