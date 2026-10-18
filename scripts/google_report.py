@@ -2251,6 +2251,26 @@ def _build_linkbuilding_sections(domain, timestamp, data, start_num=1):
                    f'({escape(str(prog.get("track", "")))} track), {prog.get("tasks_done")} of {prog.get("tasks_total")} tasks done'
                    f'{", " + str(prog.get("overdue")) + " overdue" if prog.get("overdue") else ""}. Planning estimate for the '
                    f'program: {prog.get("expected_links_low")} to {prog.get("expected_links_high")} links.</div>\n')
+    sc = lb.get("scorecard") or {}
+    if sc.get("rows"):
+        months = sc.get("months", [])
+        head = "<tr><th>Metric</th><th>Baseline</th>" + "".join(f"<th>Month {m}</th>" for m in months) + "<th>Change</th></tr>"
+        body = []
+        for r in sc["rows"]:
+            cells = "".join(f"<td>{_lb_num(v)}</td>" for v in r.get("months", []))
+            cls = "status-pass" if r.get("improved") else "status-fail" if r.get("improved") is False else ""
+            chg = r.get("change")
+            chg_txt = "&ndash;" if chg is None else (("+" if chg > 0 else "") + _lb_num(chg) if chg >= 0 else "-" + _lb_num(-chg))
+            body.append(f'      <tr><td>{escape(r.get("label", ""))}</td><td>{_lb_num(r.get("baseline"))}</td>{cells}<td class="{cls}">{chg_txt}</td></tr>')
+        out.append('  <h3>Month-on-month scorecard</h3>\n  <table>\n    <thead>' + head + '</thead>\n    <tbody>\n' + "\n".join(body) + '\n    </tbody>\n  </table>\n')
+        crow = []
+        for c in sc.get("checks", []):
+            cls = {"pass": "status-pass", "fail": "status-fail"}.get(c.get("status"), "status-warn")
+            label = {"pass": "Pass", "fail": "Act", "not_measured": "Not measured"}.get(c.get("status"), "")
+            crow.append(f'      <tr><td>Month {c.get("month")}</td><td>{escape(c.get("label", ""))}</td><td class="{cls}">{label}</td><td>{escape(c.get("action", ""))}</td></tr>')
+        if crow:
+            out.append('  <h3>Checks and corrective actions</h3>\n  <table>\n    <thead><tr><th>When</th><th>Check</th><th>Result</th><th>What to change</th></tr></thead>\n    <tbody>\n'
+                       + "\n".join(crow) + '\n    </tbody>\n  </table>\n')
     if fn.get("contacted"):
         out.append(f'  <p>So far: {fn["contacted"]} contacted, reply rate {fn.get("reply_rate")}, win rate {fn.get("win_rate")}, '
                    f'{fn.get("links_still_live")} links still live.</p>\n')

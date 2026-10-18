@@ -9,7 +9,7 @@ auditable.
 Pipeline (each step is one subcommand, state lives in a campaign directory):
 
     init        create campaign.json (site profile, sender, settings)
-    library     add the industry-matched evergreen sources from data/linkbuilding/library.json
+    library     add the industry-matched evergreen sources from skills/seo-linkbuilding/data/library.json
     ingest      add prospects from a CSV/JSON export (competitor gap, SERP research, a vendor sheet)
     check-live  confirm each prospect domain resolves to a real, unparked site (network)
     screen      apply hard disqualifiers, soft flags and a 0-100 score
@@ -30,6 +30,8 @@ Pipeline (each step is one subcommand, state lives in a campaign directory):
     program     generate the dated six-month program (tasks by week, owner, industry track)
     week        show this week's program tasks plus outreach that is due
     done        mark program tasks complete
+    snapshot    record a month's visibility numbers (Search Console, brand search, maps, AI mentions)
+    scorecard   month-on-month table against baseline, with pass/fail checks and what to change
 
 Usage:
     python scripts/linkbuilding.py init --campaign link-campaigns/example.com --site https://example.com \\
@@ -58,7 +60,13 @@ from urllib.parse import urlparse
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPTS_DIR)
-DATA_DIR = os.path.join(REPO_ROOT, "data", "linkbuilding")
+# The link-building module keeps its data inside its own skill folder. Plugin installs keep the repo layout;
+# manual installs put scripts under ~/.claude/skills/seo/scripts and the skill beside it.
+_DATA_CANDIDATES = (
+    os.path.join(REPO_ROOT, "skills", "seo-linkbuilding", "data"),
+    os.path.join(os.path.dirname(REPO_ROOT), "seo-linkbuilding", "data"),
+)
+DATA_DIR = next((d for d in _DATA_CANDIDATES if os.path.isdir(d)), _DATA_CANDIDATES[0])
 if SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, SCRIPTS_DIR)
 
@@ -298,7 +306,10 @@ class Campaign:
 
 
 def load_library() -> dict:
-    return load_json(os.path.join(DATA_DIR, "library.json"), {"types": {}, "sources": []})
+    path = os.path.join(DATA_DIR, "library.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"Link-building data not found at {DATA_DIR}. Reinstall the seo-linkbuilding skill.")
+    return load_json(path)
 
 
 def load_blocklist() -> dict:
@@ -1014,37 +1025,108 @@ RECURRING_TASKS = [
 ]
 
 
-def build_program(campaign: Campaign, start: date) -> dict:
+FAST_SHIFT = 3
+ASSET_1_TASKS = {"Build linkable asset 1", "Supply data and review asset 1", "Publish asset 1"}
+FAST_EXTRA_TASKS = [
+    ([1], "claude", "Foundation", "Fast-start gap check", "Site passed readiness: confirm listings, entity signals and fixes already exist; fill only the gaps this week."),
+    ([23, 24], "claude", "Compound", "Build linkable asset 3", "Use the weeks the fast start freed: a third asset on the angle that won most links."),
+    ([25], "claude", "Compound", "Digital PR wave 4", "Pitch asset 3 to a new list of 30 to 40 named writers."),
+]
+# Tasks tied to the calendar rather than to the work sequence: never shifted by a fast start.
+PINNED_TITLES = {"Six-month report and next plan", "Monthly results check", "Fast-start gap check",
+                 "Build linkable asset 3", "Digital PR wave 4"}
+
+
+def program_mode(campaign: Campaign, requested: str = "auto") -> tuple:
+    """Decide standard or fast start. Fast start needs a passing readiness check, not a hunch."""
+    verdict = (campaign.config.get("readiness") or {}).get("verdict")
+    if requested == "fast":
+        if verdict != "ready":
+            return "fast", f"fast start forced although readiness is {verdict or 'not assessed'}; expect lower reply rates until fixed"
+        return "fast", "readiness verdict is ready"
+    if requested == "standard":
+        return "standard", "standard requested"
+    if verdict == "ready":
+        return "fast", "readiness verdict is ready, so the four foundation weeks compress into two"
+    return "standard", f"readiness verdict is {verdict or 'not assessed'}; foundation weeks are needed"
+
+
+def _phase_for(week: int, fast: bool) -> str:
+    edges = (2, 9, 17) if fast else (4, 12, 20)
+    return "Foundation" if week <= edges[0] else "Engine" if week <= edges[1] else "Scale" if week <= edges[2] else "Compound"
+
+
+def build_program(campaign: Campaign, start: date, mode: str = "auto", existing_asset: Optional[str] = None) -> dict:
     cfg = campaign.config
     industry = cfg.get("industry", "general")
     track = INDUSTRY_TRACK.get(industry, "content")
     ymyl = industry in YMYL_INDUSTRIES
+    chosen, reason = program_mode(campaign, mode)
+    fast = chosen == "fast"
     tasks = []
     types = load_library()["types"]
-    mix = TRACK_MIX[track]
+    mix = dict(TRACK_MIX[track])
+    if fast:
+        mix["digital_pr"] = mix.get("digital_pr", 0) + 35
     pitches = sum(n for t, n in mix.items() if types[t]["mode"] == "email")
-    ppw = round(pitches / 23)
+    outreach_weeks = PROGRAM_WEEKS - (1 if fast else 4)
+    ppw = round(pitches / outreach_weeks)
+
+    def when(week: int, phase: str, title: str) -> int:
+        if not fast or title in PINNED_TITLES:
+            return week
+        if phase == "Foundation":
+            return 1 if week <= 2 else 2
+        return max(2, week - FAST_SHIFT)
 
     def add(week, owner, phase, title, detail):
         tasks.append({"id": f"w{week:02d}-{slug(title)}", "week": week, "date": (start + timedelta(weeks=week - 1)).isoformat(),
-                      "phase": phase, "owner": owner, "title": title, "detail": detail, "done": False})
+                      "phase": _phase_for(week, fast), "owner": owner, "title": title, "detail": detail, "done": False})
 
-    for weeks, owner, phase, title, detail, tracks, ymyl_only in PROGRAM_TASKS:
+    templates = list(PROGRAM_TASKS) + ([(w, o, ph, t, d, None, False) for w, o, ph, t, d in FAST_EXTRA_TASKS] if fast else [])
+    seen = set()
+    for weeks, owner, phase, title, detail, tracks, ymyl_only in templates:
         if tracks and track not in tracks:
             continue
         if ymyl_only and not ymyl:
             continue
+        if existing_asset and title in ASSET_1_TASKS:
+            continue
+        detail = detail.replace("{asset}", TRACK_ASSET[track])
+        if existing_asset and title == "Digital PR wave 1":
+            detail = f"Pitch the existing asset {existing_asset} to 30 to 40 named writers who cover the topic."
+            weeks = [2 if fast else 4]
         for w in weeks:
-            add(w, owner, phase, title, detail.replace("{asset}", TRACK_ASSET[track]))
+            wk = when(w, phase, title)
+            if (wk, title) in seen:
+                continue
+            seen.add((wk, title))
+            add(wk, owner, phase, title, detail)
     for weeks, owner, title, detail in RECURRING_TASKS:
         for w in weeks:
-            phase = "Foundation" if w <= 4 else "Engine" if w <= 12 else "Scale" if w <= 20 else "Compound"
-            add(w, owner, phase, title, detail.replace("{ppw}", str(ppw)))
+            wk = when(w, "Engine", title)
+            if (wk, title) in seen:
+                continue
+            seen.add((wk, title))
+            add(wk, owner, "Engine", title, detail.replace("{ppw}", str(ppw)))
+    if fast:
+        # Recurring work also runs in the weeks the shift freed at the end.
+        for weeks, owner, title, detail in RECURRING_TASKS:
+            if title in PINNED_TITLES:
+                continue
+            step = weeks.step
+            for w in range(PROGRAM_WEEKS - FAST_SHIFT + 1, PROGRAM_WEEKS + 1):
+                if step > 1 and (w - (weeks.start - FAST_SHIFT)) % step:
+                    continue
+                if (w, title) not in seen:
+                    seen.add((w, title))
+                    add(w, owner, "Engine", title, detail.replace("{ppw}", str(ppw)))
     tasks.sort(key=lambda t: (t["week"], {"client": 0, "you": 1, "claude": 2}[t["owner"]], t["title"]))
 
     lo = sum(n * types[t]["success_range"][0] for t, n in mix.items())
     hi = sum(n * types[t]["success_range"][1] for t, n in mix.items())
     return {"site": cfg.get("site"), "name": cfg.get("name"), "industry": industry, "track": track, "ymyl": ymyl,
+            "mode": chosen, "mode_reason": reason, "existing_asset": existing_asset,
             "start": start.isoformat(), "end": (start + timedelta(weeks=PROGRAM_WEEKS)).isoformat(), "weeks": PROGRAM_WEEKS,
             "asset_plan": TRACK_ASSET[track], "planned_volume": mix, "email_pitches": pitches,
             "pitches_per_week": ppw, "expected_links_low": round(lo), "expected_links_high": round(hi),
@@ -1056,7 +1138,7 @@ def build_program(campaign: Campaign, start: date) -> dict:
 def program_markdown(prog: dict) -> str:
     lines = [f"# Six-month link building program: {prog['name']}", "",
              f"Site: {prog['site']}  ", f"Track: {prog['track']}{' (YMYL rules apply)' if prog['ymyl'] else ''}  ",
-             f"Runs {prog['start']} to {prog['end']}", "",
+             f"Runs {prog['start']} to {prog['end']}  ", f"Mode: {prog.get('mode', 'standard')} ({prog.get('mode_reason', '')})", "",
              f"**Linkable asset plan:** {prog['asset_plan']}", "",
              f"**Planned activity:** about {prog['email_pitches']} personalised pitches (about {prog['pitches_per_week']} a week "
              f"from week 4), plus listings and expert-quote responses.", "",
@@ -1078,6 +1160,107 @@ def week_view(prog: dict, today: date) -> dict:
     week = max(1, min(PROGRAM_WEEKS, (today - start).days // 7 + 1))
     return {"week": week, "tasks": [t for t in prog["tasks"] if t["week"] == week],
             "overdue": [t for t in prog["tasks"] if t["week"] < week and not t["done"]]}
+
+
+# --------------------------------------------------------------------------------------
+# Monthly scorecard
+# --------------------------------------------------------------------------------------
+
+# Metrics the owner records each month (from Search Console, a SERP check or the maps tool). The campaign's own
+# numbers (links, pitches, replies) are added automatically. Each entry: (key, label, how to collect).
+SCORECARD_METRICS = [
+    ("gsc_impressions_28d", "Search impressions, last 28 days", "Search Console performance report, whole site"),
+    ("gsc_clicks_28d", "Search clicks, last 28 days", "Search Console performance report, whole site"),
+    ("target_impressions_28d", "Impressions on linked target pages", "Search Console, filtered to the pages being promoted"),
+    ("target_queries_top10", "Target queries ranking in the top 10", "Search Console average position for the agreed query list"),
+    ("target_queries_top3", "Target queries ranking in the top 3", "Search Console average position for the agreed query list"),
+    ("branded_owned_page1", "Results on page 1 for the brand name that the business controls", "Logged-out search for the brand; count own site, profiles and listings"),
+    ("map_pack_rank", "Average map-pack position (local only, lower is better)", "/seo maps geo-grid, same grid each month"),
+    ("ai_mentions", "AI answers that mention or cite the brand", "/seo geo check on the agreed prompt list"),
+    ("referring_domains", "Referring domains", "/seo backlinks, same source each month"),
+]
+AUTO_METRICS = ("links_live", "editorial_links", "listings_live", "pitches_sent", "reply_rate")
+LOWER_IS_BETTER = {"map_pack_rank"}
+
+# Decision checks, not forecasts. When a check fails, the action says what to change before the next month.
+SCORECARD_CHECKS = [
+    (1, "links_live", ">=", 5, "Fewer than 5 live links after month 1: finish foundation listings and the mention and partner pitches before anything else."),
+    (1, "reply_rate", ">=", 0.05, "Reply rate under 5 percent: rewrite hooks, confirm each contact is the right person, test a stronger asset."),
+    (1, "branded_owned_page1", "up", None, "Brand search not improving: check the new profiles are indexed and listed in sameAs on the site."),
+    (2, "target_impressions_28d", "up", None, "Target-page impressions flat: check indexing, titles and internal links to those pages before adding links."),
+    (2, "editorial_links", ">=", 1, "No earned editorial link yet: the asset may not be citable; add original numbers and re-pitch."),
+    (3, "target_queries_top10", "up", None, "No target query has moved into the top 10: compare against the competitors' pages and close the content gap."),
+    (3, "referring_domains", "up", None, "Referring domains not growing: verify won links are live and counted; shift effort to the best-converting tactic."),
+    (6, "gsc_clicks_28d", "up", None, "Clicks not up after six months: review keyword choice and search intent with /seo sxo before continuing."),
+]
+
+
+def auto_metrics(campaign: Campaign) -> dict:
+    types = load_library()["types"]
+    won = [p for p in campaign.prospects if p["status"] == "won"]
+    f = funnel(campaign)
+    return {
+        "links_live": len(won),
+        "editorial_links": sum(1 for p in won if types.get(p["type"], {}).get("mode") == "email" or p["type"] == "expert_quote"),
+        "listings_live": sum(1 for p in won if types.get(p["type"], {}).get("mode") == "self_serve"),
+        "pitches_sent": f["contacted"],
+        "reply_rate": f["reply_rate"] if f["reply_rate"] is not None else 0.0,
+    }
+
+
+def record_snapshot(campaign: Campaign, month: int, values: dict, when: Optional[date] = None) -> dict:
+    known = {k for k, _, _ in SCORECARD_METRICS}
+    unknown = sorted(set(values) - known)
+    if unknown:
+        raise SystemExit(f"Unknown scorecard metrics: {unknown}. Known: {sorted(known)}")
+    snap = {"month": month, "captured": now_iso(when), **values, **auto_metrics(campaign)}
+    snaps = [s for s in campaign.config.get("snapshots", []) if s["month"] != month]
+    snaps.append(snap)
+    campaign.config["snapshots"] = sorted(snaps, key=lambda s: s["month"])
+    return snap
+
+
+def _better(metric: str, new, old) -> Optional[bool]:
+    if new is None or old is None:
+        return None
+    return new < old if metric in LOWER_IS_BETTER else new > old
+
+
+def build_scorecard(campaign: Campaign) -> dict:
+    base = campaign.config.get("baseline", {}) or {}
+    snaps = campaign.config.get("snapshots", [])
+    labels = {k: lbl for k, lbl, _ in SCORECARD_METRICS} | {
+        "links_live": "Links won and live", "editorial_links": "Earned editorial links", "listings_live": "Listings live",
+        "pitches_sent": "Pitches sent", "reply_rate": "Reply rate"}
+    rows = []
+    for key in [k for k, _, _ in SCORECARD_METRICS] + list(AUTO_METRICS):
+        series = [s.get(key) for s in snaps]
+        if base.get(key) is None and all(v is None for v in series):
+            continue
+        latest = next((v for v in reversed(series) if v is not None), None)
+        start = base.get(key, 0 if key in AUTO_METRICS else None)
+        delta = (latest - start) if isinstance(latest, (int, float)) and isinstance(start, (int, float)) else None
+        rows.append({"metric": key, "label": labels[key], "baseline": start, "months": series, "latest": latest,
+                     "change": delta, "improved": _better(key, latest, start)})
+    checks = []
+    latest_month = snaps[-1]["month"] if snaps else 0
+    for month, key, op, target, action in SCORECARD_CHECKS:
+        if month > latest_month:
+            continue
+        snap = next((s for s in snaps if s["month"] == month), None) or snaps[-1]
+        value = snap.get(key)
+        if value is None:
+            status = "not_measured"
+        elif op == ">=":
+            status = "pass" if value >= target else "fail"
+        else:
+            b = base.get(key)
+            status = "not_measured" if b is None else ("pass" if _better(key, value, b) else "fail")
+        checks.append({"month": month, "metric": key, "label": labels[key], "rule": f"{op} {target}" if op == ">=" else "better than baseline",
+                       "value": value, "status": status, "action": action if status != "pass" else ""})
+    return {"months": [s["month"] for s in snaps], "rows": rows, "checks": checks,
+            "verdict": ("on_track" if checks and all(c["status"] == "pass" for c in checks) else
+                        "needs_action" if any(c["status"] == "fail" for c in checks) else "incomplete")}
 
 
 # --------------------------------------------------------------------------------------
@@ -1148,6 +1331,7 @@ def build_report_data(campaign: Campaign) -> dict:
         "readiness": cfg.get("readiness"), "baseline": cfg.get("baseline"), "funnel": funnel(campaign),
         "profile_gaps": [k for k in ("tagline", "short_description", "long_description", "address", "phone") if not cfg.get("profile", {}).get(k)],
         "program": _program_summary(campaign),
+        "scorecard": build_scorecard(campaign) if campaign.config.get("snapshots") else None,
     }}
 
 
@@ -1404,13 +1588,13 @@ def cmd_program(a):
     path = os.path.join(a.campaign, "program.json")
     if os.path.exists(path) and not a.force:
         raise SystemExit("Program exists. Use --force to regenerate (completed-task marks are lost).")
-    prog = build_program(c, parse_day(a.start))
+    prog = build_program(c, parse_day(a.start), a.mode, a.existing_asset)
     save_json(path, prog)
     md = os.path.join(a.campaign, "program.md")
     with open(md, "w", encoding="utf-8") as fh:
         fh.write(program_markdown(prog))
     emit(a, {k: v for k, v in prog.items() if k != "tasks"} | {"tasks": len(prog["tasks"]), "written": [path, md]},
-         f"Program for {prog['name']}: track {prog['track']}, {len(prog['tasks'])} tasks, {prog['start']} to {prog['end']}. "
+         f"Program for {prog['name']}: track {prog['track']}, {prog['mode']} start ({prog['mode_reason']}), {len(prog['tasks'])} tasks, {prog['start']} to {prog['end']}. "
          f"Planning estimate {prog['expected_links_low']} to {prog['expected_links_high']} links. Wrote {md}")
 
 
@@ -1446,6 +1630,30 @@ def cmd_done(a):
         fh.write(program_markdown(prog))
     missing = sorted(ids - set(hit))
     emit(a, {"done": hit, "unknown": missing}, f"Marked {len(hit)} done." + (f" Unknown ids: {missing}" if missing else ""))
+
+
+def cmd_snapshot(a):
+    c = Campaign(a.campaign)
+    values = {}
+    for kv in a.values:
+        k, _, v = kv.partition("=")
+        num = parse_metric(v)
+        if num is None:
+            raise SystemExit(f"{k}: {v!r} is not a number")
+        values[k.strip()] = num
+    snap = record_snapshot(c, a.month, values, parse_day(a.date) if a.date else None)
+    c.save()
+    emit(a, snap, f"Month {a.month} snapshot stored ({len(values)} recorded, links live {snap['links_live']}).")
+
+
+def cmd_scorecard(a):
+    c = Campaign(a.campaign)
+    sc = build_scorecard(c)
+    rows = [{"metric": r["label"][:48], "baseline": r["baseline"], "latest": r["latest"], "change": r["change"]} for r in sc["rows"]]
+    checks = [{"month": x["month"], "status": x["status"], "check": x["label"][:44]} for x in sc["checks"]]
+    text = table(rows, ["metric", "baseline", "latest", "change"]) + "\n\n" + (table(checks, ["month", "status", "check"]) if checks else "No checks due yet.")
+    text += f"\n\nVerdict: {sc['verdict']}" + "".join(f"\n- {x['action']}" for x in sc["checks"] if x["action"])
+    emit(a, sc, text)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1506,10 +1714,16 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--out")
     sp = add("program", cmd_program, "Generate the dated six-month program"); camp(sp)
     sp.add_argument("--start"); sp.add_argument("--force", action="store_true")
+    sp.add_argument("--mode", choices=["auto", "standard", "fast"], default="auto",
+                    help="auto picks fast when the stored readiness verdict is 'ready'")
+    sp.add_argument("--existing-asset", help="URL of a linkable page the site already has; pitching starts at once")
     sp = add("week", cmd_week, "Tasks and outreach due this week"); camp(sp)
     sp.add_argument("--today")
     sp = add("done", cmd_done, "Mark program tasks done"); camp(sp)
     sp.add_argument("--ids", required=True)
+    sp = add("snapshot", cmd_snapshot, "Record this month's visibility numbers (key=value ...)"); camp(sp)
+    sp.add_argument("--month", type=int, required=True); sp.add_argument("--date"); sp.add_argument("values", nargs="*")
+    sp = add("scorecard", cmd_scorecard, "Month-on-month scorecard with pass/fail checks"); camp(sp)
     sp = add("readiness", cmd_readiness, "Audit whether the site can earn links")
     sp.add_argument("--url", required=True); sp.add_argument("--industry", default="general")
     sp.add_argument("--html-file"); sp.add_argument("--campaign")

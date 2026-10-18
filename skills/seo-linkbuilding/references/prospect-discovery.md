@@ -45,7 +45,7 @@ shortfall and run more discovery. Never lower the bar to fill the list.
    with `broken_url`, `their_page_url`, `asset_url` and `asset_summary`.
 7. **Liveness.** `linkbuilding.py check-live --campaign <dir>` drops parked, suspended and dead domains.
 8. **Screen.** `linkbuilding.py screen`, then read the rejection breakdown. If a rejection looks wrong, check the
-   domain by hand before overriding; the rules are in `data/linkbuilding/blocklist.json`.
+   domain by hand before overriding; the rules are in `skills/seo-linkbuilding/data/blocklist.json`.
 
 ## Qualification checklist (do this for every prospect that survives screening)
 
@@ -72,7 +72,7 @@ Do not buy from them. Three uses are legitimate:
 
 - **Blocklist.** Domains that appear across several seller sheets, or that show gambling, adult or piracy content,
   fake `.edu` lookalikes, identical DA/DR across unrelated sites, or topic-hopping content farms, are in
-  `data/linkbuilding/blocklist.json`. Add new ones as you meet them.
+  `skills/seo-linkbuilding/data/blocklist.json`. Add new ones as you meet them.
 - **Seller-listed demotion.** A real publisher that also sells posts is not a free prospect. The script treats
   every domain in `seller_listed_domains.txt` as paid and disclosed only.
 - **Direct buying of disclosed sponsorship.** A few real publishers in these sheets (regional newspapers, national

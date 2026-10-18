@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (mostly free, some disclosed paid), waits for owner approval, drafts personalised outreach,
   tracks replies and wins, and re-verifies links at 30, 90 and 180 days. It never sends email
   and never recommends bought links.
-- **Source library and blocklist** in `data/linkbuilding/`: 78 evergreen sources by industry,
+- **Source library and blocklist** in `skills/seo-linkbuilding/data/`: 78 evergreen sources by industry,
   a screening blocklist, and a seller-listed domain list built from four paid guest-post
   vendor sheets. Rejects gambling, adult and piracy lookalikes, fake `.edu` domains,
   link-seller language, cloned metrics and learning-system user pages.
@@ -25,6 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tailored by industry track (local, SaaS and B2B, e-commerce, content) with YMYL additions, and every task owned by
   Claude, the operator or the client. New reference `six-month-program.md` documents the new-client process and what
   can and cannot be compressed from a traditional 12-month engagement.
+- **Fast start.** `program` compresses the foundation weeks when the readiness check passes, and
+  `--existing-asset` starts pitching an existing linkable page in week 2.
+- **Monthly scorecard.** `snapshot` and `scorecard` record visibility each month against the baseline
+  (Search Console, brand search, maps, AI mentions, links) and run pass/fail checks with corrective actions.
+  Shown in the report's Measurement section.
+- **Always on.** The orchestrator and full audits now run the link-building readiness check for every client
+  site, and show the weekly plan and scorecard when a campaign exists.
+
+### Changed
+
+- The link-building module is self-contained in `skills/seo-linkbuilding/` (data moved from
+  `data/linkbuilding/`, plus a module `README.md`). The engine stays in `scripts/` because
+  `claude-seo run` only executes scripts from there.
 
 ### Fixed
 

@@ -49,9 +49,11 @@ claude-seo/
       SKILL.md
       references/                # API reference files (11 files)
     seo-backlinks/SKILL.md      # Backlink profile analysis
-    seo-linkbuilding/           # Link building campaigns (readiness, prospects, outreach, tracking)
+    seo-linkbuilding/           # Link building module (self-contained; engine is scripts/linkbuilding.py)
+      README.md                  # Module map: what lives where, how it activates
       SKILL.md
-      references/                # Site readiness, prospect discovery, outreach playbook
+      references/                # Program, operating model, readiness, discovery, outreach, measurement
+      data/                      # Source library, blocklist, seller-listed domains
     seo-cluster/                 # Semantic topic clustering (v1.9.0, by Lutfiya Miller)
       SKILL.md
       references/                # Clustering methodology, architecture, workflow
@@ -155,7 +157,7 @@ claude-seo/
     release_sign.py              # SHA-256 manifest generator for release signing
     verify_release.py            # Verify checkout integrity against a release manifest
     mobile_analysis.py           # Mobile rendering analysis (gitignored, dev-only)
-  data/                            # Shared data files (google-updates.json, linkbuilding/ source library and blocklist)
+  data/                            # Shared data files (google-updates.json)
   schema/                          # Schema.org JSON-LD templates
   templates/                       # Per-site Growth Loop template (copied into a website's own repo)
     ONBOARD-A-SITE.md              # Human-facing onboarding walkthrough

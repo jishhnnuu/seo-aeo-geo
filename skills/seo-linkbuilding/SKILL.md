@@ -38,6 +38,7 @@ Follow the writing rules in `CLAUDE.md`: no em or en dashes as punctuation, no s
 |---------|------|
 | `/seo linkbuilding onboard <url>` | New client: intake, setup, dated six-month program, first approvals |
 | `/seo linkbuilding week <client>` | This week's program tasks and outreach due for one client |
+| `/seo linkbuilding scorecard <client>` | Month-on-month visibility against baseline, with pass/fail checks |
 | `/seo linkbuilding <url>` | Full flow: readiness, shortlist, then stop for approval |
 | `/seo linkbuilding plan <url>` | Readiness and asset plan only |
 | `/seo linkbuilding prospects <url>` | Discovery, screening, shortlist (no drafting) |
@@ -55,10 +56,16 @@ When the owner names a new client, run the six-month program in `references/six-
 only what cannot be found on the site), then steps 1 to 6 below, then generate the dated program:
 
 ```bash
-claude-seo run linkbuilding.py program --campaign link-campaigns/<domain> --start <YYYY-MM-DD, a Monday>
+claude-seo run linkbuilding.py program --campaign link-campaigns/<domain> --start <YYYY-MM-DD, a Monday> \
+  [--existing-asset <url>]                                               # fast start is automatic when readiness is "ready"
 claude-seo run linkbuilding.py week --campaign link-campaigns/<domain>     # each week: tasks due plus outreach due
 claude-seo run linkbuilding.py done --campaign link-campaigns/<domain> --ids <task ids>
+claude-seo run linkbuilding.py snapshot --campaign link-campaigns/<domain> --month <n> <metric>=<value> ...
+claude-seo run linkbuilding.py scorecard --campaign link-campaigns/<domain>   # monthly: change vs baseline, pass/fail checks
 ```
+
+Record the baseline with the scorecard metric names before week 1 (see `references/six-month-program.md`). Each month,
+record a snapshot, run `scorecard`, and act on every failed check before the next month.
 
 Hand the owner `program.md`, the readiness verdict and the first shortlist. Every week afterwards, run `week`, do the
 claude tasks, and give the owner a short list of what to approve and send.

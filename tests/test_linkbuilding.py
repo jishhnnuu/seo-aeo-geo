@@ -448,3 +448,78 @@ def test_program_cli_week_and_done(camp):
         lb.main(["program", "--campaign", camp.dir])
     summary = lb.build_report_data(lb.Campaign(camp.dir))["linkbuilding"]["program"]
     assert summary["tasks_done"] == len(first) and summary["track"] == "saas_b2b"
+
+
+# ---- fast start and scorecard ------------------------------------------------------------
+
+def _ready(camp):
+    camp.config["readiness"] = {"verdict": "ready", "score": 90}
+
+
+def test_auto_mode_needs_a_passing_readiness_check(camp):
+    assert lb.program_mode(camp)[0] == "standard"
+    _ready(camp)
+    assert lb.program_mode(camp)[0] == "fast"
+    assert lb.program_mode(camp, "standard")[0] == "standard"
+
+
+def test_fast_start_moves_outreach_earlier_and_keeps_calendar_tasks(camp):
+    std = lb.build_program(camp, date(2026, 10, 19), "standard")
+    _ready(camp)
+    fast = lb.build_program(camp, date(2026, 10, 19))
+    first = lambda prog, title: min(t["week"] for t in prog["tasks"] if t["title"] == title)
+    assert fast["mode"] == "fast"
+    assert first(fast, "Weekly outreach batch") == 2 < first(std, "Weekly outreach batch")
+    assert first(fast, "Digital PR wave 1") < first(std, "Digital PR wave 1")
+    assert first(fast, "Monthly results check") == first(std, "Monthly results check") == 5
+    assert {t["week"] for t in fast["tasks"]} == set(range(1, 27))
+    assert any(t["title"] == "Build linkable asset 3" and t["week"] >= 23 for t in fast["tasks"])
+    assert any(t["title"] == "Six-month report and next plan" and t["week"] == 26 for t in fast["tasks"])
+    assert len({(t["week"], t["title"]) for t in fast["tasks"]}) == len(fast["tasks"]), "no duplicate tasks in a week"
+
+
+def test_existing_asset_skips_building_asset_one(camp):
+    _ready(camp)
+    prog = lb.build_program(camp, date(2026, 10, 19), existing_asset="https://example.com/calculator")
+    titles = [t["title"] for t in prog["tasks"]]
+    assert "Build linkable asset 1" not in titles and "Publish asset 1" not in titles
+    wave = next(t for t in prog["tasks"] if t["title"] == "Digital PR wave 1")
+    assert wave["week"] == 2 and "https://example.com/calculator" in wave["detail"]
+
+
+def test_scorecard_month_on_month_and_checks(camp):
+    lb.main(["baseline", "--campaign", camp.dir, "branded_owned_page1=3", "target_impressions_28d=1200",
+             "referring_domains=14", "map_pack_rank=9"])
+    c = lb.Campaign(camp.dir)
+    p = _resource_prospect(c)
+    lb.log_event(p, "sent", when=date(2026, 11, 2))
+    lb.log_event(p, "replied", when=date(2026, 11, 4))
+    lb.log_event(p, "won", when=date(2026, 11, 6), link_url="https://blog.example.org/ap-tools")
+    c.save()
+    lb.main(["snapshot", "--campaign", camp.dir, "--month", "1", "branded_owned_page1=6", "target_impressions_28d=1150", "map_pack_rank=6"])
+    sc = lb.build_scorecard(lb.Campaign(camp.dir))
+    rows = {r["metric"]: r for r in sc["rows"]}
+    assert rows["branded_owned_page1"]["change"] == 3 and rows["branded_owned_page1"]["improved"]
+    assert rows["map_pack_rank"]["improved"], "lower map rank is better"
+    checks = {x["metric"]: x for x in sc["checks"]}
+    assert set(checks) == {"links_live", "reply_rate", "branded_owned_page1"}, "only month-1 checks are due"
+    assert checks["links_live"]["status"] == "fail" and checks["links_live"]["action"]
+    assert checks["reply_rate"]["status"] == "pass" and checks["branded_owned_page1"]["status"] == "pass"
+    assert sc["verdict"] == "needs_action"
+    lb.main(["snapshot", "--campaign", camp.dir, "--month", "2", "target_impressions_28d=1500"])
+    sc = lb.build_scorecard(lb.Campaign(camp.dir))
+    assert sc["months"] == [1, 2]
+    assert next(x for x in sc["checks"] if x["metric"] == "target_impressions_28d")["status"] == "pass"
+    assert lb.build_report_data(lb.Campaign(camp.dir))["linkbuilding"]["scorecard"]["rows"]
+
+
+def test_snapshot_rejects_unknown_metric_and_non_numbers(camp):
+    with pytest.raises(SystemExit):
+        lb.main(["snapshot", "--campaign", camp.dir, "--month", "1", "made_up_metric=4"])
+    with pytest.raises(SystemExit):
+        lb.main(["snapshot", "--campaign", camp.dir, "--month", "1", "gsc_clicks_28d=lots"])
+
+
+def test_data_lives_in_the_skill_folder():
+    assert Path(lb.DATA_DIR).parts[-2:] == ("seo-linkbuilding", "data")
+    assert Path(lb.DATA_DIR, "library.json").is_file()

@@ -30,6 +30,9 @@ def _data(name: str = "Acme") -> dict:
         "readiness": {"score": 55, "verdict": "fix_first", "checks": [{"id": "a", "pass": False, "level": "fail", "label": "L", "fix": "F"}],
                       "asset_ideas": ["Idea"]},
         "baseline": {"referring_domains": 14, "captured": "x"}, "funnel": {"contacted": 0}, "profile_gaps": ["tagline"],
+        "scorecard": {"months": [1], "verdict": "needs_action",
+                      "rows": [{"metric": "links_live", "label": "Links won and live", "baseline": 0, "months": [3], "latest": 3, "change": 3, "improved": True}],
+                      "checks": [{"month": 1, "metric": "links_live", "label": "Links won and live", "status": "fail", "action": "Finish listings"}]},
         "program": {"track": "saas_b2b", "week": 3, "weeks": 26, "tasks_done": 9, "tasks_total": 115, "overdue": 2,
                     "expected_links_low": 37, "expected_links_high": 105},
     }}
@@ -49,6 +52,7 @@ def test_standalone_report_has_all_sections_and_no_dash_punctuation(tmp_path):
         assert title in html
     assert "Shortlist is below 100" in html
     assert "week 3 of 26" in html and "2 overdue" in html
+    assert "Month-on-month scorecard" in html and "Finish listings" in html
     body = html.split("</style>", 1)[1]
     assert "\u2014" not in body and "\u2013" not in body
 

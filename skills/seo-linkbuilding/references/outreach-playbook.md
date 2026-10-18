@@ -40,7 +40,7 @@ stop, goes on the suppression list (`log --event declined`) and is never contact
 
 Start with 20 to 30 emails, not 100. Read every reply. Fix the hook, the asset or the target type, then widen.
 Typical outcomes for cold pitches to relevant editors are low single digits to roughly 15 percent depending on the
-tactic (see `types` in `data/linkbuilding/library.json`). Unlinked mentions and partner pages convert best, broken-link
+tactic (see `types` in `skills/seo-linkbuilding/data/library.json`). Unlinked mentions and partner pages convert best, broken-link
 and guest pitches worst. Replace the planning estimates with the campaign's own rates as soon as there are 20 sends.
 
 Send a handful a day from a real mailbox on the business's own domain, in plain text, without tracking pixels at

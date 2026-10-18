@@ -137,15 +137,31 @@ above first, then delegate to subagents in parallel:
 9. If e-commerce detected, also spawn seo-ecommerce agent
 10. If drift baseline exists for this URL (`claude-seo run drift_history.py <url>`), also spawn seo-drift agent
 11. Always include seo-sxo in full audits (search experience applies to all sites)
-12. Collect results and generate unified report with SEO Health Score (0-100)
-13. **Synthesize via the 10-principle framework** (see "Synthesis Methodology" below), walk PERCEIVE → ANALYZE → VALIDATE → ACT before bucketing findings into Critical / High / Medium / Low
-14. Create prioritized action plan with dependency sequencing + falsifiability per recommendation
-15. **Offer PDF report**: "Generate a professional PDF report? Use `/seo google report full`"
+12. Always include link building (see "Link Building Is Always On" below)
+13. Collect results and generate unified report with SEO Health Score (0-100)
+14. **Synthesize via the 10-principle framework** (see "Synthesis Methodology" below), walk PERCEIVE → ANALYZE → VALIDATE → ACT before bucketing findings into Critical / High / Medium / Low
+15. Create prioritized action plan with dependency sequencing + falsifiability per recommendation
+16. **Offer PDF report**: "Generate a professional PDF report? Use `/seo google report full`"
 
 For individual commands, load the relevant sub-skill directly — the
 Pre-Flight Capability Check still applies, scoped to what that command
 actually uses (e.g. `/seo google` only needs the Google API row).
 After any analysis command completes, offer to generate a PDF report via `scripts/google_report.py`.
+
+## Link Building Is Always On
+
+Off-page authority is part of every engagement, not an add-on. For any request about a client or owned website
+(audit, page, plan, technical, local, content, "help with this site"):
+
+1. Look for `link-campaigns/<domain>/campaign.json`.
+2. **Campaign exists:** run `claude-seo run linkbuilding.py week --campaign link-campaigns/<domain>` and
+   `scorecard`, and add a short "Link building this week" block to the answer: tasks due, outreach due, latest checks.
+3. **No campaign:** run `claude-seo run linkbuilding.py readiness --url <url> --industry <industry>` and include an
+   "Off-page and link building" section: the readiness verdict, the top three fixes, whether a fast start applies,
+   and the offer to start the six-month program with `/seo linkbuilding onboard <url>`.
+4. Never start outreach, drafting or account creation from this check. It reports and offers; the owner decides.
+
+Module: `skills/seo-linkbuilding/` (see its `README.md`).
 
 ## Synthesis Methodology
 
